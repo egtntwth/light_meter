@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1b1d1c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Film Meter Log</title>
+<title>light_meter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -63,27 +63,61 @@ h2{font-size:17px}
 
 /* 촬영 화면 */
 #shoot .wrap{padding-block:10px 16px}
-.finder{position:relative;width:100%;aspect-ratio:3/4;max-height:50vh;border-radius:14px;overflow:hidden;background:#000;touch-action:manipulation}
+html,body{overflow-x:hidden}
+/* 뷰파인더는 롤 포맷의 화면비(--ar = 가로/세로)를 따르고, 화면 높이의 46%를 넘지 않게 폭을 줄인다 */
+/* 촬영 화면: 한 화면 고정. 뷰파인더 상자가 남는 높이를 다 쓰고, 그 안에서 포맷 비율을 유지 */
+#shoot:not([hidden]){height:100%}
+.shoot{height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:8px;
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:6px 0}
+.sbar{display:flex;align-items:center;gap:10px;flex:none}
+.sbar .title{flex:1;min-width:0}
+.icon-btn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:transparent;font-size:18px;cursor:pointer}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rollfilm{font-size:13px;color:var(--ink-dim)}
+.finder-box{flex:1 1 auto;min-height:140px;container-type:size;display:flex;align-items:center;justify-content:center}
+.finder{--ar:0.6667;position:relative;width:min(100%, calc(46svh * var(--ar)));aspect-ratio:var(--ar);border-radius:14px;overflow:hidden;background:#000;touch-action:manipulation}
+@supports (width:1cqh){.finder{width:min(100cqw, calc(100cqh * var(--ar)))}}
+.finder .status{position:absolute;left:8px;bottom:8px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;pointer-events:none;max-width:70%}
+.finder #photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.finder .manual-panel{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--ink-dim);font-size:14px;line-height:1.6;
+  background:repeating-linear-gradient(45deg,var(--body-2) 0 10px,var(--body) 10px 20px)}
+.finder .manual-panel span{background:var(--body);padding:12px 14px;border-radius:10px;border:1px solid var(--line);max-width:26em}
+.photo-btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;z-index:2}
+.photo-btn.top{top:10px;transform:translateX(-50%);padding:6px 12px;font-size:13px;background:rgba(0,0,0,.55);color:#fff;border-color:rgba(255,255,255,.4)}
+.finder .status #locChip{pointer-events:auto;cursor:pointer}
+.finder .status .chip{font-size:10px;padding:1px 7px;background:rgba(0,0,0,.5);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick{display:grid;grid-template-columns:1fr 1fr auto 1.35fr;gap:8px;flex:none}
+.qk{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:0 9px;background:var(--body-2);height:42px;min-width:0;cursor:pointer}
+.qk>span{font-family:var(--f-num);font-size:10px;letter-spacing:.08em;color:var(--ink-dim);flex:none}
+.qk select{flex:1;min-width:0;width:100%;background:transparent;border:0;font-weight:600;font-size:15px;-webkit-appearance:none;appearance:none;padding:0;cursor:pointer}
+.qk.mode{justify-content:space-between;font-size:13px}
+.qk.mode b{min-width:0;font-weight:600}
+.quick .me-toggle{height:42px}
+.finder .orient{position:absolute;right:10px;top:10px;font-family:var(--f-num);font-size:12px;font-weight:600;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:4px 8px;cursor:pointer}
+.finder .fmt{position:absolute;right:10px;bottom:10px;font-family:var(--f-num);font-size:11px;color:rgba(255,255,255,.75);pointer-events:none}
 .finder video{width:100%;height:100%;object-fit:cover;display:block}
 .finder .msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;color:var(--ink-dim);font-size:14px}
 .finder .badge{position:absolute;left:10px;top:10px}
+.finder .msg{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center}
+.finder .msg .detail{font-family:var(--f-num);font-size:11px;opacity:.7;word-break:break-all}
+.finder .msg .help{font-size:13px;line-height:1.5;max-width:30em}
 .reticle{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border:1.5px solid rgba(255,255,255,.85);border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 .reticle.cw{width:48%;height:auto;aspect-ratio:1;margin:0;transform:translate(-50%,-50%);border-style:dashed;border-color:rgba(255,255,255,.5)}
 .reticle.avg{display:none}
-.lcd{background:var(--lcd);color:var(--lcd-ink);border-radius:12px;padding:12px 14px;margin-top:12px;
-  box-shadow:inset 0 2px 6px rgba(0,0,0,.25);display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:end}
+.lcd{flex:none;background:var(--lcd);color:var(--lcd-ink);border-radius:12px;padding:10px 13px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.25);display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;align-items:end;min-width:0}
 .lcd .k{font-size:10px;letter-spacing:.14em;color:var(--lcd-dim);font-family:var(--f-num)}
-.lcd .ev{font-family:var(--f-num);font-size:34px;font-weight:600;line-height:1}
-.lcd .combo{font-family:var(--f-num);font-size:28px;font-weight:600;line-height:1;text-align:right;white-space:nowrap}
+.lcd .ev{font-family:var(--f-num);font-size:clamp(26px,8.5vw,34px);font-weight:600;line-height:1}
+.lcd .combo{font-family:var(--f-num);font-size:clamp(20px,6.6vw,28px);font-weight:600;line-height:1;text-align:right;white-space:nowrap;min-width:0}
 .lcd .sub{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;font-family:var(--f-num);font-size:12px;color:var(--lcd-dim);border-top:1px solid rgba(29,34,25,.18);padding-top:6px;margin-top:4px;flex-wrap:wrap}
 .lcd.held{outline:2px solid var(--lcd-ink);outline-offset:-4px}
 .lcd{touch-action:pan-y;cursor:ew-resize;user-select:none;-webkit-user-select:none}
 .lcd:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 .lcd.dragging{box-shadow:inset 0 2px 10px rgba(0,0,0,.4)}
-.strip{grid-column:1/-1;display:flex;justify-content:center;font-family:var(--f-num);font-size:12px;color:var(--lcd-dim);overflow:hidden;white-space:nowrap;
+.strip{grid-column:1/-1;min-width:0;display:flex;justify-content:center;font-family:var(--f-num);font-size:12px;color:var(--lcd-dim);overflow:hidden;white-space:nowrap;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);
   border-top:1px solid rgba(29,34,25,.18);padding-top:6px;margin-top:2px}
-.strip span{flex:none;width:96px;text-align:center;position:relative}
+.strip span{flex:none;width:clamp(84px,26vw,104px);text-align:center;position:relative}
 .strip span.on{color:var(--lcd-ink);font-weight:600}
 .strip span.on::before{content:"";position:absolute;left:50%;top:-7px;width:0;height:0;border:4px solid transparent;border-top-color:var(--lcd-ink);transform:translateX(-50%)}
 .strip span.void{visibility:hidden}
@@ -95,10 +129,16 @@ h2{font-size:17px}
 .me-toggle{border:1px solid var(--line);background:transparent;color:var(--ink-dim);border-radius:10px;padding:8px 12px;font-family:var(--f-num);font-weight:600;cursor:pointer}
 .me-toggle[aria-pressed="true"]{background:var(--warn);color:var(--body);border-color:var(--warn)}
 .me-row select{background:var(--body-2);border:1px solid var(--line);border-radius:8px;padding:7px 8px}
-.shutter-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
-.shutter{width:76px;height:76px;border-radius:50%;border:4px solid var(--ink);background:var(--red);cursor:pointer;flex:none;box-shadow:0 0 0 4px var(--body) inset}
+/* 셔터 줄은 화면 아래에 붙여서 스크롤하지 않고 누를 수 있게 */
+.shutter-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;padding-block:2px 10px}
+.shutter-row .btn{min-width:84px}
+.shutter{width:68px;height:68px;border-radius:50%;border:4px solid var(--ink);background:var(--red);cursor:pointer;flex:none;box-shadow:0 0 0 4px var(--body) inset}
 .shutter:active{transform:scale(.96)}
-.counter{font-family:var(--f-num);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.grid3 select{padding:9px 6px}
+.prio-row{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:10px}
+.prio-row .seg button{white-space:nowrap;padding-inline:4px}
+.counter{flex:none;font-family:var(--f-num);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1}
 .counter small{display:block;font-size:11px;font-weight:400;color:var(--ink-dim)}
 
 /* 바텀 시트 */
@@ -106,7 +146,7 @@ h2{font-size:17px}
 .sheet{width:100%;max-width:560px;background:var(--body-2);border-radius:18px 18px 0 0;border-top:1px solid var(--line);
   padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:90vh;overflow:auto}
 .sheet .field input,.sheet .field select,.sheet .field textarea,.sheet .inp{background:var(--body)}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--body);padding:10px 16px;border-radius:99px;font-size:14px;font-weight:500;z-index:30;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;top:calc(60px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--ink);color:var(--body);padding:10px 16px;border-radius:99px;font-size:14px;font-weight:500;z-index:30;max-width:90vw;text-align:center}
 .toast.bad{background:var(--red);color:#fff}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
@@ -122,7 +162,7 @@ tr.me-sub td:first-child{color:var(--warn)}
 <section id="home"><div class="wrap stack">
   <div class="row">
     <div class="grow">
-      <div class="label">Film Meter Log</div>
+      <div class="label">light_meter</div>
       <h1 data-i18n="appSub"></h1>
     </div>
     <div class="lang" role="group" aria-label="Language"><button data-lang="ko">한</button><button data-lang="en">EN</button></div>
@@ -167,42 +207,41 @@ tr.me-sub td:first-child{color:var(--warn)}
 </div></section>
 
 <!-- 촬영 -->
-<section id="shoot" hidden><div class="wrap">
-  <div class="topbar">
-    <button class="btn small ghost" id="shootBack" data-i18n="home"></button>
-    <div class="title"><div class="label" id="rollTag">ROLL</div><div class="muted" id="rollFilm"></div></div>
+<section id="shoot" hidden><div class="shoot">
+  <div class="sbar">
+    <button class="icon-btn" id="shootBack" data-i18n-aria="homeAria">←</button>
+    <div class="title"><div class="label ell" id="rollTag">ROLL</div><div class="rollfilm ell" id="rollFilm"></div></div>
     <div class="counter" id="frameCounter">1/36</div>
   </div>
-  <div class="finder" id="finder">
+  <div class="finder-box"><div class="finder" id="finder">
     <video id="video" playsinline muted autoplay></video>
+    <img id="photo" alt="" hidden>
+    <div class="manual-panel" id="manualPanel" hidden><span data-i18n="manualPanel"></span></div>
     <div class="reticle" id="reticle"></div>
+    <button class="btn primary photo-btn" id="photoBtn" hidden></button>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
     <span class="chip me badge" id="meBadge" hidden></span>
-    <div class="msg" id="finderMsg"></div>
-  </div>
+    <button class="orient" id="orientBtn" data-i18n-aria="orientAria">⇄</button>
+    <span class="fmt" id="fmtLabel"></span>
+    <div class="status"><span id="metaChip" class="chip"></span><span id="locChip" class="chip"></span></div>
+    <div class="msg" id="finderMsg">
+      <span id="finderText"></span>
+      <span class="help" id="finderHelp" hidden></span>
+      <button class="btn primary" id="camRetry" hidden data-i18n="camTap"></button>
+      <span class="detail" id="finderDetail" hidden></span>
+    </div>
+  </div></div>
   <div class="lcd" id="lcd" tabindex="0" role="slider" aria-valuemin="-20" aria-valuemax="20" aria-valuenow="0" data-i18n-aria="shiftAria">
     <div class="k">EV₁₀₀</div><div class="k" style="text-align:right" id="lcdIsoLabel">ISO 400</div>
     <div class="ev" id="lcdEv">--.-</div><div class="combo" id="lcdCombo">f/-- --</div>
     <div class="strip" id="lcdStrip" aria-hidden="true"></div>
     <div class="sub"><span id="lcdMode">LIVE</span><span class="shift" id="lcdShift"></span><span id="lcdDiff"></span><span id="lcdWarn"></span></div>
   </div>
-  <div class="muted" style="margin-top:6px;font-size:12px" data-i18n="shiftHint"></div>
-  <div class="stack" style="margin-top:12px">
-    <div class="seg" id="meterSeg" role="group">
-      <button data-v="spot" data-i18n="spot"></button><button data-v="cw" data-i18n="cw"></button><button data-v="avg" data-i18n="avg"></button>
-    </div>
-    <div class="row">
-      <div class="seg" id="prioSeg" role="group" style="flex:none">
-        <button data-v="A" data-i18n="prioA"></button><button data-v="S" data-i18n="prioS"></button>
-      </div>
-      <select id="prioValue" class="grow inp" style="padding:8px 10px;border-radius:10px"></select>
-    </div>
-    <div class="me-row">
-      <button class="me-toggle" id="meToggle" aria-pressed="false">ME</button>
-      <span class="muted" data-i18n="me"></span>
-      <label class="muted row" style="gap:6px"><span data-i18n="mePlan"></span><select id="mePlan"></select></label>
-      <label class="muted row" style="gap:6px"><input type="checkbox" id="meComp"><span data-i18n="meComp"></span></label>
-    </div>
-    <div class="row muted"><span id="metaChip" class="chip"></span><span id="locChip" class="chip"></span><span class="grow"></span><button class="btn small ghost" id="shootSettings" data-i18n="settingsCal"></button></div>
+  <div class="quick">
+    <label class="qk"><span>EC</span><select id="ecSel" class="num"></select></label>
+    <label class="qk"><span>ISO</span><select id="isoSel" class="num"></select></label>
+    <button class="me-toggle" id="meToggle" aria-pressed="false">ME</button>
+    <button class="qk mode" id="shootSettings"><b class="num ell" id="modeLabel">A f/8 · SPOT</b><span aria-hidden="true">⚙</span></button>
   </div>
   <div class="shutter-row">
     <button class="btn" id="reviewBtn" data-i18n="viewLog"></button>
@@ -241,6 +280,10 @@ tr.me-sub td:first-child{color:var(--warn)}
     <label class="field"><span class="label" data-i18n="frameNo"></span><input id="lFrame" type="number" inputmode="numeric" min="0"></label>
     <label class="field"><span class="label" data-i18n="lens"></span><input id="lLens"></label>
   </div>
+  <div class="grid2">
+    <label class="field"><span class="label" data-i18n="place"></span><input id="lPlace" data-i18n-ph="placePh"></label>
+    <label class="field"><span class="label" data-i18n="coords"></span><input id="lCoords" inputmode="text" placeholder="37.4963, 126.9572"></label>
+  </div>
   <label class="field"><span class="label" data-i18n="note"></span><input id="lNote" data-i18n-ph="optional"></label>
   <div class="muted" id="lOver" hidden></div>
   <div class="muted" id="lLoc"></div>
@@ -261,10 +304,41 @@ tr.me-sub td:first-child{color:var(--warn)}
   <div class="row"><button class="btn grow" id="delCancel" data-i18n="cancel"></button><button class="btn red grow" id="delConfirm" data-i18n="del"></button></div>
 </div></div>
 
+<!-- 위치 도움말 시트 -->
+<div class="sheet-bg" id="locSheet" hidden><div class="sheet stack" role="dialog" aria-labelledby="locTitle">
+  <h2 id="locTitle" data-i18n="locTitle"></h2>
+  <div class="muted" id="locReason"></div>
+  <div id="locHelp" style="line-height:1.6"></div>
+  <div class="muted" data-i18n="locManualNote"></div>
+  <div class="row"><button class="btn grow" id="locClose" data-i18n="close"></button><button class="btn primary grow" id="locRetry" data-i18n="locRetry"></button></div>
+</div></div>
+
 <!-- 설정 시트 -->
 <div class="sheet-bg" id="setSheet" hidden><div class="sheet stack" role="dialog" aria-labelledby="setTitle">
   <div class="row"><h2 class="grow" id="setTitle" data-i18n="meterSettings"></h2>
     <div class="lang" role="group" aria-label="Language"><button data-lang="ko">한</button><button data-lang="en">EN</button></div></div>
+  <div class="field"><span class="label" data-i18n="methodL"></span>
+    <div class="seg" id="methodSeg" role="group">
+      <button data-v="auto" data-i18n="mAuto"></button><button data-v="live" data-i18n="mLive"></button><button data-v="photo" data-i18n="mPhoto"></button><button data-v="manual" data-i18n="mManual"></button>
+    </div>
+    <span class="muted" style="font-size:12px" id="methodNote"></span></div>
+  <div class="field"><span class="label" data-i18n="meterModeL"></span>
+    <div class="seg" id="meterSeg" role="group">
+      <button data-v="spot" data-i18n="spot"></button><button data-v="cw" data-i18n="cw"></button><button data-v="avg" data-i18n="avg"></button>
+    </div></div>
+  <div class="field"><span class="label" data-i18n="prioModeL"></span>
+    <div class="prio-row">
+      <div class="seg" id="prioSeg" role="group">
+        <button data-v="A" data-i18n="prioA"></button><button data-v="S" data-i18n="prioS"></button>
+      </div>
+      <select id="prioValue" class="inp num" style="padding:8px 10px;border-radius:10px"></select>
+    </div></div>
+  <div class="field"><span class="label" data-i18n="me"></span>
+    <div class="row">
+      <label class="muted row" style="gap:6px"><span data-i18n="mePlan"></span><select id="mePlan" class="inp" style="width:auto;padding:6px 8px"></select></label>
+      <label class="muted row" style="gap:6px"><input type="checkbox" id="meComp"><span data-i18n="meComp"></span></label>
+    </div></div>
+  <div class="muted" style="font-size:12px" data-i18n="shiftHint"></div>
   <div class="muted" id="setMeta"></div>
   <div class="grid2">
     <label class="field"><span class="label" data-i18n="phoneN"></span><input id="sPhoneN" type="number" step="0.1" min="1" inputmode="decimal"></label>
@@ -275,6 +349,16 @@ tr.me-sub td:first-child{color:var(--warn)}
     <div class="label" data-i18n="calTitle"></div>
     <div class="muted" data-i18n="calDesc"></div>
     <div class="row"><input id="sRef" type="number" step="0.1" inputmode="decimal" placeholder="12" class="grow inp"><button class="btn" id="sCal" data-i18n="calBtn"></button></div>
+    <div class="label" style="margin-top:4px" data-i18n="camCalTitle"></div>
+    <div class="muted" style="font-size:12px" data-i18n="camCalDesc"></div>
+    <div class="grid3">
+      <select id="dAp" class="inp num" aria-label="Aperture"></select>
+      <select id="dSh" class="inp num" aria-label="Shutter"></select>
+      <select id="dIso" class="inp num" aria-label="ISO"></select>
+    </div>
+    <button class="btn" id="sCamCal" data-i18n="camCalBtn"></button>
+    <div class="muted" style="font-size:12px" data-i18n="sunnyDesc"></div>
+    <button class="btn" id="sSunny" data-i18n="sunny"></button>
   </div>
   <button class="btn primary" id="setClose" data-i18n="close"></button>
 </div></div>
@@ -328,7 +412,35 @@ ko: {
   emptyPast:'끝낸 롤이 여기 쌓입니다. 롤마다 JSON/CSV로 내보내서 스캔본에 메타데이터를 입힐 때 씁니다.',
   frameLabel:(f, e) => `${f}번 컷${e ? `-${e}` : ''}`, pushShort:up => up ? '푸시' : '풀', exposures:n => `노출 ${n}회`,
   shiftHint:'리드아웃을 좌우로 드래그하면 같은 노출로 조합만 바뀌어요 (프로그램 시프트). 두 번 탭하면 원래대로.',
-  shiftAria:'프로그램 시프트: 좌우 화살표로 조합 변경', shiftReset:'시프트 초기화'
+  shiftAria:'프로그램 시프트: 좌우 화살표로 조합 변경', shiftReset:'시프트 초기화',
+  orientAria:'뷰파인더 가로·세로 전환', homeAria:'홈으로', meterModeL:'측광 방식', prioModeL:'우선 모드와 고정값',
+  isoChanged:v => `EI ${v}로 변경했어요. 다음 컷부터 적용돼요.`, ecSet:v => `노출 보정 ${v}`,
+  devAuto:(m, n) => `${m} 감지: 메인 카메라 f/${n} 자동 입력`, devIos:'아이폰은 카메라 노출 정보를 웹에 주지 않아서 폰 조리개 값은 쓰이지 않아요. 아래 보정을 한 번 해 주세요.',
+  methodL:'측광 방식', mAuto:'자동', mLive:'실시간', mPhoto:'사진', mManual:'수동',
+  methodAuto:m => `자동: 이 기기에서는 "${m}" 방식을 써요. 안드로이드는 실시간, 아이폰·아이패드는 사진 측광.`,
+  methodDesc:{live:'실시간: 카메라 화면으로 계속 측광해요.', photo:'사진: 기본 카메라로 한 장 찍으면 사진 속 셔터·조리개·ISO(EXIF)로 EV를 계산해요. 아이폰에서 가장 정확해요.', manual:'수동: 측광 없이 조리개·셔터·장소를 직접 입력해서 기록만 해요.'},
+  methodChanged:m => `측광 방식: ${m}`,
+  photoTake:'📷 사진으로 측광', photoRetake:'📷 다시 측광', photoReading:'사진 정보를 읽는 중…',
+  photoNoExif:'이 사진에는 셔터·조리개·ISO 정보가 없어요. 다시 찍어 보거나 수동 모드를 쓰세요.',
+  photoMetered:(s, a, i) => `사진 노출 ${a} ${s} ISO ${i} 기준으로 측광했어요`, exifLoadFail:'사진 정보를 읽는 도구를 불러오지 못했어요. 인터넷 연결을 확인하세요.',
+  manualPanel:'수동 입력 모드예요. 측광 없이 기록만 해요. 빨간 버튼을 누르면 조리개·셔터·장소를 직접 넣어 저장합니다.',
+  metaPhoto:(s, i, a) => `EXIF · ${a} ${s} ISO${i}`, metaPhotoWait:'사진 측광 대기', metaManual:'수동 입력',
+  place:'장소', placePh:'예: 성수동 골목', coords:'좌표 (GPS 안 될 때)',
+  locDenied:'위치 권한 꺼짐 · 탭', locNoSignal:'위치 신호 없음 · 탭', locTimeout:'위치 시간 초과 · 탭',
+  locReasonDenied:'이 사이트에 위치 권한이 없거나, 기기의 위치 서비스가 꺼져 있어요.', locReasonSignal:'기기가 현재 위치를 찾지 못했어요. 실내라면 창가나 실외에서 다시 시도해 보세요.', locReasonTimeout:'위치를 찾는 데 시간이 너무 오래 걸렸어요.',
+  locTitle:'위치가 안 잡힐 때', locRetry:'다시 시도', locManualNote:'그래도 안 되면 기록할 때 장소나 좌표를 직접 입력할 수 있어요.',
+  locHelpIos:'1. 설정 앱 → 개인정보 보호 및 보안 → 위치 서비스를 켜요.<br>2. 같은 화면 아래쪽 "Safari 웹 사이트" → "앱을 사용하는 동안", "정확한 위치" 켬.<br>3. 사파리 주소창 "가가(aA)" → 웹 사이트 설정 → 위치 "허용".<br>4. 이 페이지를 새로고침.',
+  locHelpMac:'1. 시스템 설정 → 개인정보 보호 및 보안 → 위치 서비스에서 Safari를 켜요.<br>2. Safari → 설정 → 웹 사이트 → 위치에서 이 사이트를 "허용".<br>3. 새로고침.',
+  locHelpOther:'1. 주소창 자물쇠(사이트 정보) → 위치 "허용".<br>2. 폰 빠른 설정에서 위치(GPS)가 켜져 있는지 확인.<br>3. 새로고침.',
+  camCalTitle:'디지털카메라로 보정', camCalDesc:'디카를 P/A 모드, 노출 보정 0, 같은 측광 방식으로 두고 같은 대상을 겨눈 뒤 디카가 고른 조리개·셔터·ISO를 넣으세요.',
+  camCalBtn:'디카 값으로 보정', capsLine:s => `카메라 지원 기능: ${s}`, lockOn:'노출 고정 측광 사용 중 (셔터·ISO를 앱이 정해서 계산)',
+  sunny:'맑은 날 해 기준 (EV 15)', sunnyDesc:'기준 노출계가 없으면: 맑은 날 직사광선을 받는 회색·잔디 같은 중간 톤을 스팟으로 겨누고 누르세요.',
+  camTap:'카메라 켜기', camNoFrames:'카메라 화면이 안 들어와요. 버튼을 눌러 다시 켜 보세요.',
+  camInsecure:'파일을 직접 열었거나 HTTPS가 아닌 주소라서 카메라를 쓸 수 없어요. https://egtntwth.github.io/light_meter/ 로 열어 주세요.',
+  camNotFound:'이 기기에서 카메라를 찾지 못했어요.', camBusy:'다른 앱이나 탭이 카메라를 쓰고 있어요. 그 앱을 닫고 다시 켜 주세요.',
+  helpIos:'아이폰: 주소창 왼쪽 "가가(aA)" → 웹 사이트 설정 → 카메라·위치를 "허용"으로 바꾼 뒤 새로고침하세요. 설정 앱 → Safari → 카메라가 "거부"로 되어 있어도 막힙니다.',
+  helpMac:'Mac: 메뉴 Safari → 설정 → 웹 사이트 → 카메라에서 이 사이트를 "허용"으로 바꾼 뒤 새로고침하세요.',
+  helpOther:'브라우저 주소창의 자물쇠(사이트 정보) 아이콘에서 카메라를 "허용"으로 바꾼 뒤 새로고침하세요.'
 },
 en: {
   appSub:'Light meter & shot log for film', newRoll:'Start new roll', pastRolls:'Past rolls', meterSettings:'Meter settings',
@@ -373,7 +485,35 @@ en: {
   emptyPast:'Finished rolls collect here. Export each as JSON or CSV to tag your scans with metadata later.',
   frameLabel:(f, e) => `frame ${f}${e ? `-${e}` : ''}`, pushShort:up => up ? 'push' : 'pull', exposures:n => `${n} exposures`,
   shiftHint:'Drag the readout sideways to trade aperture for shutter at the same exposure (program shift). Double-tap to reset.',
-  shiftAria:'Program shift: use left and right arrows to change the pair', shiftReset:'Shift reset'
+  shiftAria:'Program shift: use left and right arrows to change the pair', shiftReset:'Shift reset',
+  orientAria:'Switch viewfinder between portrait and landscape', homeAria:'Home', meterModeL:'Metering', prioModeL:'Priority and fixed value',
+  isoChanged:v => `EI set to ${v}. Applies from the next frame.`, ecSet:v => `Exposure comp ${v}`,
+  devAuto:(m, n) => `${m} detected: main camera f/${n} filled in`, devIos:'iPhones don’t share camera exposure data with web pages, so the phone aperture isn’t used. Calibrate once below.',
+  methodL:'Metering method', mAuto:'Auto', mLive:'Live', mPhoto:'Photo', mManual:'Manual',
+  methodAuto:m => `Auto: this device uses "${m}". Android meters live, iPhone and iPad meter from a photo.`,
+  methodDesc:{live:'Live: meters continuously from the camera view.', photo:'Photo: take one shot with the built-in camera and the EV is computed from its shutter, aperture and ISO (EXIF). Most accurate on iPhone.', manual:'Manual: no metering. Enter aperture, shutter and place yourself and just log.'},
+  methodChanged:m => `Metering method: ${m}`,
+  photoTake:'📷 Meter from a photo', photoRetake:'📷 Meter again', photoReading:'Reading photo data…',
+  photoNoExif:'This photo has no shutter, aperture or ISO data. Try again or use Manual.',
+  photoMetered:(s, a, i) => `Metered from photo exposure ${a} ${s} ISO ${i}`, exifLoadFail:'Couldn’t load the photo data reader. Check your connection.',
+  manualPanel:'Manual mode. No metering, just logging. Tap the red button to enter aperture, shutter and place.',
+  metaPhoto:(s, i, a) => `EXIF · ${a} ${s} ISO${i}`, metaPhotoWait:'Waiting for photo', metaManual:'Manual entry',
+  place:'Place', placePh:'e.g. Seongsu alley', coords:'Coordinates (if GPS fails)',
+  locDenied:'Location off · tap', locNoSignal:'No location fix · tap', locTimeout:'Location timed out · tap',
+  locReasonDenied:'This site has no location permission, or Location Services are off on the device.', locReasonSignal:'The device couldn’t find its position. Indoors, try near a window or outside.', locReasonTimeout:'Finding the location took too long.',
+  locTitle:'If location doesn’t work', locRetry:'Try again', locManualNote:'If it still fails, you can type a place or coordinates when you log.',
+  locHelpIos:'1. Settings → Privacy & Security → turn on Location Services.<br>2. Below that, Safari Websites → While Using the App, and turn on Precise Location.<br>3. In Safari, tap "aA" → Website Settings → Location: Allow.<br>4. Reload this page.',
+  locHelpMac:'1. System Settings → Privacy & Security → Location Services: turn on Safari.<br>2. Safari → Settings → Websites → Location: Allow this site.<br>3. Reload.',
+  locHelpOther:'1. Address bar lock (site info) → Location: Allow.<br>2. Make sure Location (GPS) is on in quick settings.<br>3. Reload.',
+  camCalTitle:'Calibrate with a digital camera', camCalDesc:'Set the camera to P or A, exposure comp 0, same metering mode. Aim both at the same subject and enter the aperture, shutter and ISO it picks.',
+  camCalBtn:'Calibrate from camera', capsLine:s => `Camera supports: ${s}`, lockOn:'Locked-exposure metering on (the app sets shutter and ISO and computes from them)',
+  sunny:'Sunny day (EV 15)', sunnyDesc:'No reference meter? On a clear day, spot-meter a mid-tone in direct sun (grey pavement, grass) and tap this.',
+  camTap:'Turn on camera', camNoFrames:'No picture from the camera. Tap the button to try again.',
+  camInsecure:'The camera only works over HTTPS. You opened a local file or a non-HTTPS address. Open https://egtntwth.github.io/light_meter/ instead.',
+  camNotFound:'No camera was found on this device.', camBusy:'Another app or tab is using the camera. Close it and try again.',
+  helpIos:'iPhone: tap "aA" in the address bar → Website Settings → set Camera and Location to Allow, then reload. It is also blocked if Settings → Safari → Camera is set to Deny.',
+  helpMac:'Mac: Safari menu → Settings → Websites → Camera, set this site to Allow, then reload.',
+  helpOther:'Click the lock (site info) icon in the address bar, set Camera to Allow, then reload.'
 }};
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -392,6 +532,9 @@ const FORMATS = [
   {id:'4x5',      name:'4×5 {sheet}',        frames:10},
   {id:'8x10',     name:'8×10 {sheet}',       frames:10},
 ];
+// 포맷별 화면비 (긴 변 / 짧은 변)
+const FORMAT_RATIO = {'135':1.5, '135-24':1.5, '135-half':4/3, '120-645':56/41.5, '120-66':1, '120-67':70/56, '120-68':76/56, '120-69':84/56, '110':17/13, '4x5':1.25, '8x10':1.25};
+const ratioLabel = r => r === 1 ? '1:1' : Math.abs(r - 1.5) < .01 ? '3:2' : Math.abs(r - 4/3) < .04 ? '4:3' : Math.abs(r - 1.25) < .01 ? '5:4' : r.toFixed(2) + ':1';
 const AP_FULL  = [1,1.4,2,2.8,4,5.6,8,11,16,22,32,45,64];
 const AP_THIRD = [1,1.1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32,36,40,45,51,57,64];
 const SH_FULL  = [1/8000,1/4000,1/2000,1/1000,1/500,1/250,1/125,1/60,1/30,1/15,1/8,1/4,1/2,1,2,4,8,15,30];
@@ -579,7 +722,7 @@ $('startRollBtn').onclick = () => {
     presets.unshift({name, format:r.format, frames:r.frames, film:r.film, boxIso:r.boxIso, ei:r.ei, camera:r.camera, lens:r.lens});
     store.set('presets', presets.slice(0, 12));
   }
-  meMode = false;
+  meMode = false; settings.ec = 0; pShift = 0; saveSettings();
   rolls.push(r); saveRolls(); show('shoot');
 };
 
@@ -593,44 +736,214 @@ const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', {
 const LIN = new Float32Array(256);
 for (let i = 0; i < 256; i++){ const c = i / 255; LIN[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
 
+const UA = navigator.userAgent;
+const isIOS = /iP(hone|ad|od)/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+const isMacSafari = !isIOS && /Macintosh/.test(UA) && /Safari/.test(UA) && !/Chrome|Chromium|Edg|Firefox/.test(UA);
+const helpText = () => isIOS ? t('helpIos') : isMacSafari ? t('helpMac') : t('helpOther');
+function finderState({text, help, retry, detail} = {}){
+  $('finderMsg').hidden = !text;
+  $('finderText').textContent = text || '';
+  $('finderHelp').hidden = !help; $('finderHelp').textContent = help || '';
+  $('camRetry').hidden = !retry;
+  $('finderDetail').hidden = !detail; $('finderDetail').textContent = detail || '';
+}
+let opening = null;
+function openCamera(){
+  if (opening) return opening;
+  opening = (async () => {
+    finderState({text: t('camStarting')});
+    if (!window.isSecureContext || location.protocol === 'file:'){ finderState({text: t('camInsecure')}); return false; }
+    if (!navigator.mediaDevices?.getUserMedia){ finderState({text: t('camUnsupported'), help: helpText()}); return false; }
+    // 사파리는 제약 조건에 까다로워서 점점 느슨하게 재시도
+    const tries = [
+      {video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:960}}, audio:false},
+      {video:{facingMode:'environment'}, audio:false},
+      {video:true, audio:false}
+    ];
+    let err = null;
+    for (const c of tries){
+      try { stream = await navigator.mediaDevices.getUserMedia(c); break; }
+      catch (e){ err = e; if (e.name === 'NotAllowedError' || e.name === 'SecurityError') break; }
+    }
+    if (!stream){
+      const n = err?.name;
+      const text = (n === 'NotAllowedError' || n === 'SecurityError') ? t('camDenied')
+        : n === 'NotFoundError' ? t('camNotFound') : n === 'NotReadableError' ? t('camBusy') : t('camFail', err?.message || n);
+      finderState({text, help: helpText(), retry: true, detail: `${n || 'Error'}: ${err?.message || ''}`});
+      return false;
+    }
+    track = stream.getVideoTracks()[0];
+    await tryManualExposure();
+    video.muted = true; video.setAttribute('muted', ''); video.setAttribute('playsinline', '');
+    video.srcObject = stream;
+    try { await Promise.race([video.play(), new Promise(r => setTimeout(r, 1500))]); } catch {}
+    await new Promise(r => setTimeout(r, 300));
+    // iOS가 자동 재생을 막으면 탭해서 재생
+    if (!video.videoWidth || video.paused) finderState({text: t('camNoFrames'), retry: true});
+    else finderState();
+    return true;
+  })();
+  return opening.finally(() => { opening = null; });
+}
+video.addEventListener('playing', () => { if (stream) finderState(); });
+$('camRetry').addEventListener('click', async e => {
+  e.stopPropagation();
+  if (stream){
+    try { await video.play(); } catch {}
+    if (video.videoWidth && !video.paused){ finderState(); return; }
+    stopShoot();
+  }
+  startShoot();
+});
+
+/* 측광 방식: auto면 안드로이드 등은 실시간, 아이폰·아이패드는 사진(EXIF) */
+const method = () => { const m = settings.method || 'auto'; return m === 'auto' ? (isIOS ? 'photo' : 'live') : m; };
+const methodName = m => t({live:'mLive', photo:'mPhoto', manual:'mManual'}[m]);
+const offKey = () => method() === 'photo' ? 'photoOffset' : 'offset';   // 보정값은 방식별로 따로
+
 async function startShoot(){
   const r = activeRoll(); if (!r){ show('home'); return; }
   meMode = meMode || !!r.meOpen;
   renderShootHeader(); renderControls(); renderMetaChip(null); renderLocChip();
-  if (!stream){
-    $('finderMsg').hidden = false; $('finderMsg').textContent = t('camStarting');
-    if (!navigator.mediaDevices?.getUserMedia){ $('finderMsg').textContent = t('camUnsupported'); return; }
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:960}}, audio:false});
-      track = stream.getVideoTracks()[0];
-      video.srcObject = stream; await video.play().catch(() => {});
-      $('finderMsg').hidden = true;
-    } catch (e){
-      $('finderMsg').textContent = e.name === 'NotAllowedError' ? t('camDenied') : t('camFail', e.message);
-      return;
-    }
-  }
-  clearInterval(loopTimer); loopTimer = setInterval(measure, 180);
-  if (navigator.geolocation && geoWatch == null){
-    geoWatch = navigator.geolocation.watchPosition(p => { lastFix = p; geoErr = false; renderLocChip(); }, () => { geoErr = true; renderLocChip(); }, {enableHighAccuracy:true, maximumAge:30000});
-  }
+  startGeo();
   try { wakeLock = await navigator.wakeLock?.request('screen'); } catch {}
+  clearInterval(loopTimer); loopTimer = setInterval(measure, 180);
+  const m = method();
+  if (m === 'live'){ if (!stream) await openCamera(); }
+  else {
+    closeCamera();
+    if (m === 'photo'){ loadExifr().catch(() => {}); finderState(); }
+    else finderState();
+  }
+}
+function closeCamera(){
+  if (stream){ stream.getTracks().forEach(x => x.stop()); stream = null; track = null; video.srcObject = null; }
+  manualExp = null;
 }
 function stopShoot(){
   clearInterval(loopTimer); loopTimer = null;
-  if (stream){ stream.getTracks().forEach(x => x.stop()); stream = null; track = null; video.srcObject = null; }
+  closeCamera();
   if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
   try { wakeLock?.release(); } catch {} wakeLock = null;
 }
 document.addEventListener('visibilitychange', () => { if ($('shoot').hidden) return; document.hidden ? stopShoot() : startShoot(); });
 
+/* ---------- 위치 ---------- */
+let geoErrCode = 0;   // 0 정상/대기, 1 권한, 2 신호 없음, 3 시간 초과, -1 미지원
+function startGeo(){
+  if (!navigator.geolocation){ geoErrCode = -1; renderLocChip(); return; }
+  if (geoWatch != null) return;
+  geoWatch = navigator.geolocation.watchPosition(
+    p => { lastFix = p; geoErrCode = 0; renderLocChip(); },
+    e => { geoErrCode = e.code || 2; renderLocChip(); },
+    {enableHighAccuracy:true, maximumAge:30000, timeout:20000});
+}
 function renderLocChip(){
   const c = $('locChip');
   if (lastFix){ c.className = 'chip ok'; c.textContent = t('locAcc', Math.round(lastFix.coords.accuracy)); }
-  else if (geoErr){ c.className = 'chip warn'; c.textContent = t('locNo'); }
+  else if (geoErrCode){ c.className = 'chip warn'; c.textContent = geoErrCode === 1 ? t('locDenied') : geoErrCode === 3 ? t('locTimeout') : geoErrCode === 2 ? t('locNoSignal') : t('locNo'); }
   else { c.className = 'chip'; c.textContent = t('locWait'); }
 }
+$('locChip').addEventListener('click', e => {
+  e.stopPropagation();
+  if (lastFix) return;
+  $('locReason').textContent = geoErrCode === 1 ? t('locReasonDenied') : geoErrCode === 3 ? t('locReasonTimeout') : geoErrCode ? t('locReasonSignal') : '';
+  $('locHelp').innerHTML = isIOS ? t('locHelpIos') : isMacSafari ? t('locHelpMac') : t('locHelpOther');
+  $('locSheet').hidden = false;
+});
+$('locClose').onclick = () => $('locSheet').hidden = true;
+$('locRetry').onclick = () => {
+  $('locSheet').hidden = true;
+  if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
+  geoErrCode = 0; renderLocChip();
+  // 버튼 탭 안에서 직접 요청해야 권한 창이 다시 뜨는 브라우저가 있음
+  navigator.geolocation?.getCurrentPosition(p => { lastFix = p; renderLocChip(); }, e => { geoErrCode = e.code || 2; renderLocChip(); }, {enableHighAccuracy:true, timeout:20000});
+  startGeo();
+};
+
+/* ---------- 사진(EXIF) 측광 ---------- */
+let photoMeta = null;
+const photoSmall = document.createElement('canvas');
+let exifrPromise = null;
+function loadExifr(){
+  if (window.exifr) return Promise.resolve(window.exifr);
+  if (exifrPromise) return exifrPromise;
+  exifrPromise = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js';
+    s.onload = () => window.exifr ? res(window.exifr) : rej(new Error('exifr'));
+    s.onerror = () => { exifrPromise = null; rej(new Error('exifr')); };
+    document.head.appendChild(s);
+  });
+  return exifrPromise;
+}
+function renderMethodUI(){
+  const m = method(), img = $('photo');
+  video.hidden = m !== 'live';
+  img.hidden = !(m === 'photo' && img.getAttribute('src'));
+  $('manualPanel').hidden = m !== 'manual';
+  $('photoBtn').hidden = m !== 'photo';
+  $('photoBtn').textContent = photoMeta ? t('photoRetake') : t('photoTake');
+  $('photoBtn').classList.toggle('top', !!photoMeta);
+  $('reticle').style.visibility = (m === 'manual' || (m === 'photo' && !photoMeta)) ? 'hidden' : '';
+  if (m !== 'live') renderMetaChip(m === 'photo' ? photoMeta : null);
+}
+$('photoBtn').addEventListener('click', e => { e.stopPropagation(); $('photoInput').click(); });
+$('photoInput').addEventListener('change', async () => {
+  const f = $('photoInput').files?.[0]; $('photoInput').value = '';
+  if (!f) return;
+  finderState({text: t('photoReading')});
+  let ex = null, loadErr = false;
+  try { const exifr = await loadExifr(); ex = await exifr.parse(f); } catch (e){ loadErr = !window.exifr; }
+  const img = $('photo');
+  const old = img.getAttribute('src'); if (old) URL.revokeObjectURL(old);
+  await new Promise(r => { img.onload = r; img.onerror = r; img.src = URL.createObjectURL(f); });
+  // 매번 큰 사진을 그리지 않도록 작은 사본을 만들어 둔다
+  const W = 320, H = Math.max(1, Math.round(W * img.naturalHeight / Math.max(1, img.naturalWidth)));
+  photoSmall.width = W; photoSmall.height = H;
+  photoSmall.getContext('2d').drawImage(img, 0, 0, W, H);
+  const iso = [ex?.ISO, ex?.ISOSpeedRatings, ex?.PhotographicSensitivity].map(v => Array.isArray(v) ? v[0] : v).find(v => v > 0);
+  const tt = ex?.ExposureTime, N = ex?.FNumber;
+  reading = null;
+  if (tt > 0 && N > 0 && iso > 0){
+    photoMeta = {t: tt, iso: +iso, N: +N, photo: true, model: ex?.Model || ''};
+    finderState(); renderMethodUI(); measure();
+    toast(t('photoMetered', fmtSh(tt), fmtAp(Math.round(N * 10) / 10), iso));
+  } else {
+    photoMeta = null; renderMethodUI(); renderLcd();
+    finderState({text: loadErr ? t('exifLoadFail') : t('photoNoExif')});
+  }
+});
+/* 노출 고정 측광: 카메라가 수동 노출을 받아주면 셔터·ISO를 우리가 정해 두고, 그 값으로 절대 EV를 계산.
+   화면이 너무 밝거나 어두우면 셔터(→ISO)를 옮겨 다시 고정한다. */
+let manualExp = null, settleUntil = 0;
+const clampR = (v, r) => Math.min(r.max, Math.max(r.min, v));
+async function tryManualExposure(){
+  manualExp = null;
+  if (settings.lockExposure === false || !track?.getCapabilities) return false;
+  const caps = track.getCapabilities();
+  if (!(caps.exposureMode || []).includes('manual') || !caps.exposureTime || !caps.iso) return false;
+  const tU = clampR(10000 / 60, caps.exposureTime), iso = clampR(100, caps.iso);
+  try {
+    await track.applyConstraints({advanced:[{exposureMode:'manual', exposureTime:tU, iso}]});
+    manualExp = {tU, iso, caps}; settleUntil = Date.now() + 600; return true;
+  } catch { return false; }
+}
+function adaptExposure(mean){
+  if (Date.now() < settleUntil) return true;
+  if (mean > 0.04 && mean < 0.45) return false;
+  const {caps} = manualExp;
+  const f = Math.min(8, Math.max(1/8, 0.18 / Math.max(mean, 1e-4)));
+  let tU = clampR(manualExp.tU * f, caps.exposureTime), iso = manualExp.iso;
+  const rest = f / (tU / manualExp.tU);            // 셔터로 다 못 옮긴 만큼은 ISO로
+  if (Math.abs(log2(rest)) > 0.3) iso = clampR(iso * rest, caps.iso);
+  if (Math.abs(log2(tU / manualExp.tU)) < 0.05 && iso === manualExp.iso) return false;   // 한계에 닿음
+  manualExp.tU = tU; manualExp.iso = iso; settleUntil = Date.now() + 600;
+  track.applyConstraints({advanced:[{exposureMode:'manual', exposureTime:tU, iso}]}).catch(() => { manualExp = null; });
+  return true;
+}
 function exposureMeta(){
+  if (manualExp) return {t: manualExp.tU / 10000, iso: manualExp.iso, locked: true};
   if (!track?.getSettings) return null;
   const s = track.getSettings();
   // Image Capture 명세: exposureTime 단위는 100µs
@@ -638,21 +951,39 @@ function exposureMeta(){
   return null;
 }
 function renderMetaChip(meta){
-  const c = $('metaChip');
-  if (meta){ c.className = 'chip ok'; c.textContent = t('metaAbs', fmtSh(meta.t), Math.round(meta.iso)); }
+  const c = $('metaChip'), m = method();
+  if (m === 'manual'){ c.className = 'chip'; c.textContent = t('metaManual'); return; }
+  if (m === 'photo'){
+    if (meta){ c.className = 'chip ok'; c.textContent = t('metaPhoto', fmtSh(meta.t), Math.round(meta.iso), fmtAp(Math.round(meta.N * 10) / 10)); }
+    else { c.className = 'chip'; c.textContent = t('metaPhotoWait'); }
+    return;
+  }
+  if (meta){ c.className = 'chip ok'; c.textContent = (meta.locked ? 'LOCK · ' : '') + t('metaAbs', fmtSh(meta.t), Math.round(meta.iso)); }
   else if (reading){ c.className = 'chip warn'; c.textContent = t('metaCal'); }
   else { c.className = 'chip'; c.textContent = t('metaChecking'); }
 }
+// 측광 소스: 실시간이면 video, 사진 모드면 찍은 사진
+function srcInfo(){
+  if (method() === 'photo'){
+    const img = $('photo');
+    return {draw: photoSmall, w: $('finder').clientWidth, h: $('finder').clientHeight, vw: img.naturalWidth, vh: img.naturalHeight};
+  }
+  return {draw: video, w: video.clientWidth, h: video.clientHeight, vw: video.videoWidth, vh: video.videoHeight};
+}
 function toVideo(nx, ny){
-  const w = video.clientWidth, h = video.clientHeight, vw = video.videoWidth, vh = video.videoHeight;
+  const {w, h, vw, vh} = srcInfo();
   const sc = Math.max(w / vw, h / vh), ox = (vw * sc - w) / 2, oy = (vh * sc - h) / 2;
   return {x: (nx * w + ox) / sc / vw, y: (ny * h + oy) / sc / vh};
 }
 function measure(){
-  if (!video.videoWidth || !$('logSheet').hidden) return;
-  const W = 160, H = Math.round(160 * video.videoHeight / video.videoWidth);
+  const m = method();
+  if (m === 'manual' || !$('logSheet').hidden) return;
+  if (m === 'photo' && !photoMeta) return;
+  const src = srcInfo();
+  if (!src.vw || !src.w) return;
+  const W = 160, H = Math.round(160 * src.vh / src.vw);
   canvas.width = W; canvas.height = H;
-  ctx.drawImage(video, 0, 0, W, H);
+  ctx.drawImage(src.draw, 0, 0, W, H);
   const d = ctx.getImageData(0, 0, W, H).data;
   const mode = settings.meter;
   const tl = toVideo(0, 0), br = toVideo(1, 1);
@@ -671,19 +1002,24 @@ function measure(){
     }
   }
   if (!sw) return;
-  const lum = sy / sw, meta = exposureMeta();
-  const ev = sceneEV({lum, meta, phoneN: settings.phoneN, offset: settings.offset, fallbackBase: settings.fallbackBase});
+  if (m === 'live' && manualExp && adaptExposure(fy / fw)) return;
+  const lum = sy / sw, meta = m === 'photo' ? photoMeta : exposureMeta();
+  const ev = sceneEV({lum, meta, phoneN: m === 'photo' ? photoMeta.N : settings.phoneN, offset: settings[offKey()] || 0, fallbackBase: settings.fallbackBase});
   reading = {lum, ev, meta, clipFrac: clip / cnt, relToFrame: log2(lum / (fy / fw)), mode};
   renderLcd(); renderMetaChip(meta);
 }
 
 /* ---------- 촬영: 표시부와 조작 ---------- */
 const meCompStops = () => meMode && settings.meComp && settings.mePlan > 1 ? log2(settings.mePlan) : 0;
+// solve()의 comp는 +일수록 노출을 줄인다. 노출 보정(EC)은 +일수록 밝게
+const compStops = () => meCompStops() - (settings.ec || 0);
+const fmtEc = v => Math.abs(v) < 0.05 ? '±0' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+const ISO_LIST = [6,8,10,12,16,20,25,32,40,50,64,80,100,125,160,200,250,320,400,500,640,800,1000,1250,1600,2000,2500,3200,4000,5000,6400];
 let pShift = 0;   // 프로그램 시프트 (단계 수, +는 조리개 우선에서 조이기 / 셔터 우선에서 느리게)
 function solveAt(k){
   const r = activeRoll(); if (!reading || !isFinite(reading.ev) || !r) return null;
   return shiftedSolve({ev100: reading.ev, iso: r.ei, prio: settings.prio, fixed: settings.prio === 'A' ? settings.apFixed : settings.shFixed,
-    step: settings.step, comp: meCompStops(), shift: k});
+    step: settings.step, comp: compStops(), shift: k});
 }
 function currentSolve(){
   const s = solveAt(pShift);
@@ -709,7 +1045,12 @@ function renderStrip(){
 }
 function renderLcd(){
   const r = activeRoll(); if (!r) return;
-  $('lcdIsoLabel').textContent = 'ISO ' + r.ei + (meCompStops() ? ` · ME −${meCompStops().toFixed(1)}` : '');
+  $('lcdIsoLabel').textContent = 'ISO ' + r.ei + (settings.ec ? ` · EC ${fmtEc(settings.ec)}` : '') + (meCompStops() ? ` · ME −${meCompStops().toFixed(1)}` : '');
+  if (method() === 'manual'){
+    $('lcdEv').textContent = '--.-'; $('lcdCombo').textContent = 'MANUAL'; $('lcdStrip').innerHTML = '';
+    $('lcdShift').textContent = ''; $('lcdDiff').textContent = ''; $('lcdWarn').textContent = ''; $('lcdMode').textContent = 'MANUAL';
+    return;
+  }
   if (!reading || !isFinite(reading.ev)){ $('lcdEv').textContent = reading ? 'LOW' : '--.-'; $('lcdCombo').textContent = '--'; $('lcdDiff').textContent = ''; $('lcdStrip').innerHTML = ''; $('lcdShift').textContent = ''; return; }
   $('lcdEv').textContent = (reading.ev >= 0 ? '' : '−') + Math.abs(reading.ev).toFixed(1);
   const s = currentSolve();
@@ -726,9 +1067,13 @@ function renderLcd(){
 function renderShootHeader(){
   const r = activeRoll(); if (!r) return;
   $('rollTag').textContent = `ROLL ${r.rollNo} · ${formatOf(r)}`;
-  $('rollFilm').textContent = [r.film || t('noFilm'), 'EI ' + r.ei, r.camera].filter(Boolean).join(' · ');
+  $('rollFilm').textContent = [r.film || t('noFilm'), r.camera].filter(Boolean).join(' · ');
   const s = nextSlot(r);
   $('frameCounter').innerHTML = counterHTML(r) + (meMode ? `<small>${t('meBadge', s.exposure || 1, settings.mePlan)}</small>` : '');
+  const ratio = FORMAT_RATIO[r.format] || 1.5, land = !!settings.finderLandscape && ratio !== 1;
+  $('finder').style.setProperty('--ar', (land ? ratio : 1 / ratio).toFixed(4));
+  $('orientBtn').hidden = ratio === 1;
+  $('fmtLabel').textContent = ratio === 1 ? '1:1' : land ? ratioLabel(ratio) : ratioLabel(ratio).split(':').reverse().join(':').replace('1:', '1:');
   $('meBadge').hidden = !meMode;
   $('meBadge').textContent = t('meBadge', s.exposure || 1, settings.mePlan);
 }
@@ -744,12 +1089,26 @@ function renderControls(){
   ret.style.left = (settings.meter === 'spot' ? spot.x * 100 : 50) + '%';
   ret.style.top  = (settings.meter === 'spot' ? spot.y * 100 : 50) + '%';
   $('meToggle').setAttribute('aria-pressed', meMode);
+  const r = activeRoll();
+  const ecs = []; for (let k = -9; k <= 9; k++) ecs.push(k / 3);
+  $('ecSel').innerHTML = ecs.map(v => `<option value="${v}" ${Math.abs(v - (settings.ec || 0)) < 0.01 ? 'selected' : ''}>${fmtEc(v)}</option>`).join('');
+  if (r){
+    const isos = ISO_LIST.includes(r.ei) ? ISO_LIST : [...ISO_LIST, r.ei].sort((a, b) => a - b);
+    $('isoSel').innerHTML = isos.map(v => `<option value="${v}" ${v === r.ei ? 'selected' : ''}>${v}</option>`).join('');
+  }
+  const m = method();
+  $('modeLabel').textContent = m === 'manual' ? 'MANUAL'
+    : `${settings.prio === 'A' ? 'A ' + fmtAp(settings.apFixed) : 'S ' + fmtSh(settings.shFixed)} · ${{spot:'SPOT', cw:'CW', avg:'AVG'}[settings.meter]}`;
+  const sel = settings.method || 'auto';
+  document.querySelectorAll('#methodSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === sel));
+  $('methodNote').textContent = sel === 'auto' ? t('methodAuto', methodName(m)) + ' ' + t('methodDesc')[m] : t('methodDesc')[m];
+  renderMethodUI();
   $('mePlan').value = settings.mePlan;
   $('meComp').checked = settings.meComp; $('meComp').disabled = !settings.mePlan;
 }
 /* 프로그램 시프트: 리드아웃 드래그 */
 (() => {
-  const lcd = $('lcd'), STEP_PX = 34;
+  const lcd = $('lcd'), STEP_PX = 58, DEAD_PX = 14;
   let drag = null, lastTap = 0;
   lcd.addEventListener('pointerdown', e => {
     if (lcd.classList.contains('held')) return;
@@ -761,7 +1120,8 @@ function renderControls(){
     const dx = e.clientX - drag.x;
     if (Math.abs(dx) > 6) drag.moved = true;
     // 손가락을 왼쪽으로 밀면 오른쪽 조합이 가운데로 온다
-    setShift(drag.start - Math.round(dx / STEP_PX), true);
+    const eff = Math.sign(dx) * Math.max(0, Math.abs(dx) - DEAD_PX);
+    setShift(drag.start - Math.round(eff / STEP_PX), true);
   });
   const end = e => {
     if (!drag || e.pointerId !== drag.id) return;
@@ -781,13 +1141,20 @@ function renderControls(){
     else if (e.key === 'Home' || e.key === 'Escape'){ setShift(0); e.preventDefault(); }
   });
 })();
+$('methodSeg').onclick = e => {
+  const v = e.target.dataset?.v; if (!v) return;
+  const before = method();
+  settings.method = v; saveSettings();
+  reading = null; renderControls(); renderLcd();
+  if (method() !== before){ toast(t('methodChanged', methodName(method()))); if (!$('shoot').hidden) startShoot(); }
+};
 $('meterSeg').onclick = e => { const v = e.target.dataset?.v; if (!v) return; settings.meter = v; saveSettings(); renderControls(); };
 $('prioSeg').onclick = e => { const v = e.target.dataset?.v; if (!v) return; settings.prio = v; pShift = 0; saveSettings(); renderControls(); renderLcd(); };
 $('prioValue').onchange = () => {
   const i = +$('prioValue').value;
   if (settings.prio === 'A') settings.apFixed = (settings.step === 'third' ? AP_THIRD : AP_FULL)[i];
   else settings.shFixed = (settings.step === 'third' ? SH_THIRD : SH_FULL)[i];
-  pShift = 0; saveSettings(); renderLcd();
+  pShift = 0; saveSettings(); renderControls(); renderLcd();
 };
 $('meToggle').onclick = () => {
   const r = activeRoll(); if (!r) return;
@@ -799,11 +1166,18 @@ $('meToggle').onclick = () => {
 $('mePlan').onchange = () => { settings.mePlan = +$('mePlan').value; saveSettings(); renderControls(); renderShootHeader(); renderLcd(); };
 $('meComp').onchange = () => { settings.meComp = $('meComp').checked; saveSettings(); renderLcd(); };
 $('finder').addEventListener('click', e => {
+  if (method() === 'manual' || (method() === 'photo' && !photoMeta)) return;
   const b = $('finder').getBoundingClientRect();
   spot = {x: (e.clientX - b.left) / b.width, y: (e.clientY - b.top) / b.height};
   if (settings.meter !== 'spot'){ settings.meter = 'spot'; saveSettings(); }
   renderControls();
 });
+$('ecSel').onchange = () => { settings.ec = +$('ecSel').value; saveSettings(); renderLcd(); toast(t('ecSet', fmtEc(settings.ec))); };
+$('isoSel').onchange = () => {
+  const r = activeRoll(); if (!r) return;
+  r.ei = +$('isoSel').value; saveRolls(); renderLcd(); toast(t('isoChanged', r.ei));
+};
+$('orientBtn').addEventListener('click', e => { e.stopPropagation(); settings.finderLandscape = !settings.finderLandscape; saveSettings(); renderShootHeader(); });
 $('shootBack').onclick = () => show('home');
 $('reviewBtn').onclick = () => openReview(activeRoll().id);
 $('endRollBtn').onclick = () => openEnd(false);
@@ -812,11 +1186,14 @@ $('endRollBtn').onclick = () => openEnd(false);
 let held = null;
 $('shutterBtn').onclick = () => {
   const r = activeRoll(); if (!r) return;
-  measure();
-  held = reading ? {...reading, solved: currentSolve()} : null;
+  const m = method();
+  if (m === 'photo' && !photoMeta){ $('photoInput').click(); return; }   // 사진 측광 전이면 먼저 찍게
+  if (m !== 'manual') measure();
+  held = m !== 'manual' && reading ? {...reading, solved: currentSolve()} : null;
   $('lcd').classList.add('held'); $('lcdMode').textContent = 'HOLD';
   const aps = settings.step === 'third' ? AP_THIRD : AP_FULL, shs = settings.step === 'third' ? SH_THIRD : SH_FULL;
-  const s = held?.solved || {N: settings.apFixed, t: settings.shFixed};
+  const last = r.shots.at(-1);
+  const s = held?.solved || (last ? {N: last.aperture, t: last.shutter} : {N: settings.apFixed, t: settings.shFixed});
   const nearIdx = (list, v) => list.reduce((bi, x, i) => Math.abs(log2(x / v)) < Math.abs(log2(list[bi] / v)) ? i : bi, 0);
   const ai = nearIdx(aps, s.N), si = nearIdx(shs, s.t);
   $('lAp').innerHTML = aps.map((v, i) => `<option value="${i}" ${i === ai ? 'selected' : ''}>${fmtAp(v)}</option>`).join('');
@@ -827,7 +1204,8 @@ $('shutterBtn').onclick = () => {
   $('logMe').hidden = !meMode; $('logMe').textContent = t('meBadge', slot.exposure || 1, settings.mePlan);
   $('lLens').value = r.shots.at(-1)?.lens || r.lens; $('lNote').value = '';
   updateOverNote();
-  $('lLoc').textContent = lastFix ? t('locUsing', Math.round(lastFix.coords.accuracy)) : t('locFetching');
+  $('lPlace').value = last?.place || ''; $('lCoords').value = '';
+  $('lLoc').textContent = lastFix ? t('locUsing', Math.round(lastFix.coords.accuracy)) : geoErrCode ? t('locManualNote') : t('locFetching');
   $('logSheet').hidden = false;
 };
 function updateOverNote(){
@@ -851,10 +1229,15 @@ $('logYes').onclick = async () => {
   const r = activeRoll(); if (!r) return;
   const aps = settings.step === 'third' ? AP_THIRD : AP_FULL, shs = settings.step === 'third' ? SH_THIRD : SH_FULL;
   const N = aps[+$('lAp').value], sh = shs[+$('lSh').value];
-  const snap = held, when = new Date();
-  $('logYes').disabled = true; $('logYes').textContent = t('locChecking');
-  const fix = await getFix();
-  $('logYes').disabled = false; $('logYes').textContent = t('logYes');
+  const snap = held, when = new Date(), m = method();
+  const cm = $('lCoords').value.match(/(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)/);
+  const typed = cm && Math.abs(+cm[1]) <= 90 && Math.abs(+cm[2]) <= 180 ? {lat: +cm[1], lon: +cm[2]} : null;
+  let fix = null;
+  if (!typed){
+    $('logYes').disabled = true; $('logYes').textContent = t('locChecking');
+    fix = await getFix();
+    $('logYes').disabled = false; $('logYes').textContent = t('logYes');
+  }
 
   let frame, exposure;
   if (meMode){
@@ -868,18 +1251,20 @@ $('logYes').onclick = async () => {
     aperture: N, shutter: sh, shutterLabel: fmtSh(sh), iso: r.ei,
     meteredEV100: snap && isFinite(snap.ev) ? Math.round(snap.ev * 10) / 10 : null,
     meCompEV: meMode ? -Math.round(meCompStops() * 10) / 10 : 0,
+    ecEV: Math.round((settings.ec || 0) * 10) / 10,
     meterMode: snap?.mode || settings.meter,
-    meterSource: snap?.meta ? 'exposure-metadata' : 'calibrated',
-    lens: $('lLens').value.trim(), note: $('lNote').value.trim(),
-    lat: fix ? +fix.coords.latitude.toFixed(6) : null,
-    lon: fix ? +fix.coords.longitude.toFixed(6) : null,
-    alt: fix && fix.coords.altitude != null ? Math.round(fix.coords.altitude) : null,
-    accuracy: fix ? Math.round(fix.coords.accuracy) : null
+    meterSource: m === 'manual' ? 'manual' : m === 'photo' ? 'photo-exif' : snap?.meta?.locked ? 'locked-exposure' : snap?.meta ? 'exposure-metadata' : 'calibrated',
+    lens: $('lLens').value.trim(), note: $('lNote').value.trim(), place: $('lPlace').value.trim(),
+    lat: typed ? typed.lat : fix ? +fix.coords.latitude.toFixed(6) : null,
+    lon: typed ? typed.lon : fix ? +fix.coords.longitude.toFixed(6) : null,
+    alt: !typed && fix && fix.coords.altitude != null ? Math.round(fix.coords.altitude) : null,
+    accuracy: typed ? null : fix ? Math.round(fix.coords.accuracy) : null,
+    locSource: typed ? 'manual' : fix ? 'gps' : null
   };
   r.shots.push(shot);
   r.shots.sort((a, b) => a.frame - b.frame || a.exposure - b.exposure);
 
-  let msg = t('logged', frame, meMode ? exposure : 0, !fix);
+  let msg = t('logged', frame, meMode ? exposure : 0, !fix && !typed && !shot.place);
   if (meMode){
     r.meOpen = {frame, count: exposure};
     if (settings.mePlan && exposure >= settings.mePlan){ r.meOpen = null; meMode = false; msg = t('meDone', frame); renderControls(); }
@@ -927,7 +1312,7 @@ function renderReview(){
       <td class="num ${s.frame > r.frames ? 'over' : ''}">${s.frame}${isMe ? `<span style="color:var(--warn)">-${s.exposure}</span>` : ''}</td>
       <td class="num">${fmtAp(s.aperture)}</td><td class="num">${esc(s.shutterLabel)}</td>
       <td class="num">${s.meteredEV100 ?? '–'}</td><td class="num">${esc(s.time.slice(11,16))}</td>
-      <td class="num">${s.lat != null ? s.lat.toFixed(4) + ', ' + s.lon.toFixed(4) : '–'}</td>
+      <td class="num">${[s.place ? esc(s.place) : '', s.lat != null ? s.lat.toFixed(4) + ', ' + s.lon.toFixed(4) : ''].filter(Boolean).join(' · ') || '–'}</td>
       <td>${esc(s.lens)}</td><td>${esc(s.note)}</td>
       <td><button class="btn small ghost" data-del="${i}">${t('del')}</button></td></tr>`;
   }).join('') : `<tr><td colspan="9" class="muted">${t('noShots')}</td></tr>`;
@@ -968,18 +1353,18 @@ $('delConfirm').onclick = () => {
 
 function exportData(r){
   return {
-    schema: 'film-meter-log/2',
+    schema: 'light_meter/2',
     roll: {rollNo:r.rollNo, format:r.format, formatName:fmtName(FORMATS.find(f => f.id === r.format)) || r.format, frames:r.frames,
            film:r.film, boxIso:r.boxIso, ei:r.ei, camera:r.camera, lens:r.lens, note:r.note, startedAt:r.startedAt, endedAt:r.endedAt},
     frames: groupFrames(r.shots)
   };
 }
 function toCsv(r){
-  const cols = ['roll','frame','exposure','multiple_exposure','time','film','ei','camera','lens','aperture','shutter','shutter_s','metered_ev100','me_comp_ev','meter_mode','lat','lon','alt','accuracy_m','note'];
+  const cols = ['roll','frame','exposure','multiple_exposure','time','film','ei','camera','lens','aperture','shutter','shutter_s','metered_ev100','ec_ev','me_comp_ev','meter_mode','meter_source','place','lat','lon','alt','accuracy_m','note'];
   const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const meFrames = new Set(groupFrames(r.shots).filter(g => g.multipleExposure).map(g => g.frame));
   const rows = r.shots.map(s => [r.rollNo, s.frame, s.exposure, meFrames.has(s.frame), s.time, r.film, s.iso, r.camera, s.lens, s.aperture, s.shutterLabel,
-    +s.shutter.toPrecision(6), s.meteredEV100, s.meCompEV, s.meterMode, s.lat, s.lon, s.alt, s.accuracy, s.note].map(q).join(','));
+    +s.shutter.toPrecision(6), s.meteredEV100, s.ecEV ?? 0, s.meCompEV, s.meterMode, s.meterSource, s.place, s.lat, s.lon, s.alt, s.accuracy, s.note].map(q).join(','));
   return '﻿' + [cols.join(','), ...rows].join('\n');
 }
 const fileName = (r, ext) => `roll${String(r.rollNo).padStart(3,'0')}_${(r.film || 'film').replace(/[^\w가-힣-]+/g, '-')}_${r.startedAt.slice(0,10)}.${ext}`;
@@ -999,23 +1384,63 @@ $('shareBtn').onclick = async () => {
 };
 
 /* ---------- 설정 / 보정 ---------- */
+// 기기 모델로 폰 메인 카메라 조리개 자동 입력 (안드로이드 Chrome의 User-Agent Client Hints)
+const PHONE_N = [
+  [/SM-S9(18|28|38)/, 'Galaxy S Ultra', 1.7],
+  [/SM-S9\d\d/, 'Galaxy S', 1.8],
+  [/SM-F\d{3}/, 'Galaxy Z', 1.8],
+  [/SM-[AM]\d{3}/, 'Galaxy A', 1.8],
+  [/Pixel/, 'Pixel', 1.7],
+];
+let device = null;
+(async () => {
+  try {
+    const ud = navigator.userAgentData;
+    if (!ud?.getHighEntropyValues) return;
+    const {model} = await ud.getHighEntropyValues(['model']);
+    if (!model) return;
+    const hit = PHONE_N.find(([re]) => re.test(model));
+    device = {model, n: hit ? hit[2] : null};
+    if (device.n && !settings.phoneNManual){ settings.phoneN = device.n; saveSettings(); }
+  } catch {}
+})();
 function openSettings(){
   const meta = exposureMeta();
-  $('setMeta').textContent = track ? (meta ? t('setMetaAbs') : t('setMetaCal')) : t('setMetaNone');
-  $('sPhoneN').value = settings.phoneN; $('sStep').value = settings.step; $('sOffset').value = settings.offset; $('sRef').value = '';
-  $('sCal').disabled = !reading;
+  const devLine = isIOS ? t('devIos') : device?.n ? t('devAuto', device.model, device.n) : '';
+  let capsLine = '';
+  try {
+    const c = track?.getCapabilities?.();
+    if (c) capsLine = t('capsLine', [`exposureMode [${(c.exposureMode || []).join(', ') || '–'}]`, `exposureTime ${c.exposureTime ? '✓' : '✗'}`, `iso ${c.iso ? '✓' : '✗'}`].join(' · '));
+  } catch {}
+  $('setMeta').textContent = [track ? (manualExp ? t('lockOn') : meta ? t('setMetaAbs') : t('setMetaCal')) : t('setMetaNone'), devLine, capsLine].filter(Boolean).join('\n');
+  const opt = (list, f, cur) => list.map((v, i) => `<option value="${i}" ${v === cur ? 'selected' : ''}>${f(v)}</option>`).join('');
+  if (!$('dAp').options.length){
+    $('dAp').innerHTML = opt(AP_THIRD, fmtAp, 8); $('dSh').innerHTML = opt(SH_THIRD, fmtSh, 1/125); $('dIso').innerHTML = opt(ISO_LIST, String, 100);
+  }
+  $('setMeta').style.whiteSpace = 'pre-line';
+  $('sPhoneN').value = settings.phoneN; $('sStep').value = settings.step; $('sOffset').value = settings[offKey()] || 0; $('sRef').value = '';
+  $('sCal').disabled = $('sCamCal').disabled = $('sSunny').disabled = !reading;
   $('setSheet').hidden = false;
 }
 $('sCal').onclick = () => {
+  measure();   // 지금 측광 방식으로 새로 잰 값에 맞춘다
   const ref = parseFloat($('sRef').value);
   if (!isFinite(ref) || !reading || !isFinite(reading.ev)){ toast(t('calNeed'), true); return; }
-  if (reading.meta){ settings.offset = Math.round((settings.offset + ref - reading.ev) * 10) / 10; $('sOffset').value = settings.offset; }
+  if (reading.meta){ const k = offKey(); settings[k] = Math.round(((settings[k] || 0) + ref - reading.ev) * 10) / 10; $('sOffset').value = settings[k]; }
   else settings.fallbackBase = Math.round((settings.fallbackBase + ref - reading.ev) * 10) / 10;
   saveSettings(); toast(t('calDone'));
 };
+$('sSunny').onclick = () => { $('sRef').value = 15; $('sCal').click(); };
+$('sCamCal').onclick = () => {
+  const N = AP_THIRD[+$('dAp').value], tt = SH_THIRD[+$('dSh').value], iso = ISO_LIST[+$('dIso').value];
+  $('sRef').value = (log2(N * N / tt) - log2(iso / 100)).toFixed(1);
+  $('sCal').click();
+};
 $('setClose').onclick = () => {
-  settings.phoneN = parseFloat($('sPhoneN').value) || 1.8;
-  settings.offset = parseFloat($('sOffset').value) || 0;
+  const n = parseFloat($('sPhoneN').value) || 1.8;
+  if (n !== settings.phoneN) settings.phoneNManual = true;
+  settings.phoneN = n;
+  settings[offKey()] = parseFloat($('sOffset').value) || 0;
   if (settings.step !== $('sStep').value) pShift = 0;
   settings.step = $('sStep').value;
   saveSettings(); $('setSheet').hidden = true; renderControls(); renderLcd();
