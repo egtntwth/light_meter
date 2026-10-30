@@ -86,7 +86,8 @@ html,body{overflow-x:hidden}
 .photo-actions .btn{white-space:nowrap}
 .photo-note{background:rgba(0,0,0,.75);color:#fff;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.55;text-align:center}
 .photo-note small{display:block;opacity:.65;font-family:var(--f-num);font-size:11px;margin-top:4px}
-.photo-actions.top{top:10px;transform:translateX(-50%);width:auto}
+.photo-actions.top{top:46px;left:10px;transform:none;width:auto;align-items:flex-start}
+.photo-actions.top .row{flex-wrap:nowrap;gap:6px}
 .photo-actions.top .photo-note,.photo-actions.top #toManualBtn{display:none}
 .photo-actions.top .btn{padding:5px 10px;font-size:12px;background:rgba(0,0,0,.55);color:#fff;border-color:rgba(255,255,255,.4)}
 .finder .status #locChip{pointer-events:auto;cursor:pointer}
@@ -102,7 +103,9 @@ html,body{overflow-x:hidden}
 .finder .fmt{position:absolute;right:10px;bottom:10px;font-family:var(--f-num);font-size:11px;color:rgba(255,255,255,.75);pointer-events:none}
 .finder video{width:100%;height:100%;object-fit:cover;display:block}
 .finder .msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;color:var(--ink-dim);font-size:14px}
-.finder .badge{position:absolute;left:10px;top:10px}
+.finder .tl{position:absolute;left:10px;top:10px;display:flex;gap:6px;align-items:center;z-index:4}
+.meter-chip{font-family:var(--f-num);font-size:12px;font-weight:600;letter-spacing:.06em;color:#fff;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.45);border-radius:8px;padding:5px 9px;cursor:pointer}
+.meter-chip::after{content:" ▾";opacity:.6;font-size:10px}
 .finder .msg{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center}
 .finder .msg .detail{font-family:var(--f-num);font-size:11px;opacity:.7;word-break:break-all}
 .finder .msg .help{font-size:13px;line-height:1.5;max-width:30em}
@@ -233,7 +236,7 @@ tr.me-sub td:first-child{color:var(--warn)}
     </div>
     <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
     <input type="file" id="photoLibInput" accept="image/*" hidden>
-    <span class="chip me badge" id="meBadge" hidden></span>
+    <div class="tl"><button class="meter-chip" id="meterChip"></button><span class="chip me" id="meBadge" hidden></span></div>
     <button class="orient" id="orientBtn" data-i18n-aria="orientAria">⇄</button>
     <span class="fmt" id="fmtLabel"></span>
     <div class="status"><span id="metaChip" class="chip"></span><span id="locChip" class="chip"></span></div>
@@ -433,9 +436,10 @@ ko: {
   methodAuto:m => `자동: 이 기기에서는 "${m}" 방식을 써요. 안드로이드는 실시간, 아이폰·아이패드는 사진 측광.`,
   methodDesc:{live:'실시간: 카메라 화면으로 계속 측광해요.', photo:'사진: 기본 카메라로 한 장 찍으면 사진 속 셔터·조리개·ISO(EXIF)로 EV를 계산해요. 아이폰에서 가장 정확해요.', manual:'수동: 측광 없이 조리개·셔터·장소를 직접 입력해서 기록만 해요.'},
   methodChanged:m => `측광 방식: ${m}`,
-  photoTake:'📷 사진으로 측광', photoRetake:'📷 다시 측광', photoReading:'사진 정보를 읽는 중…',
+  photoTake:'📷 사진으로 측광', photoRetake:'📷 다시', photoLibShort:'🖼 앨범', photoReading:'사진 정보를 읽는 중…',
   photoNoExif:'이 사진에는 셔터·조리개·ISO 정보가 없어서 측광할 수 없어요.',
   photoNoExifIos:'아이폰 사파리는 웹에서 바로 찍은 사진의 노출 정보를 지워요. 기본 카메라 앱으로 한 장 찍은 다음 "앨범에서 고르기"로 그 사진을 골라 보세요.',
+  photoBv:(bv, ev) => `사진의 밝기값(Bv ${bv}) 기준 EV ${ev}. HDR·야간 모드 영향을 받지 않아요.`, meterChipAria:'측광 방식 바꾸기 (스팟 → 중앙중점 → 평균)',
   photoLib:'🖼 앨범에서 고르기', toManual:'측광 없이 수동으로 기록', exifFound:n => `읽은 정보 ${n}개`,
   photoMetered:(s, a, i) => `사진 노출 ${a} ${s} ISO ${i} 기준으로 측광했어요`, exifLoadFail:'사진 정보를 읽는 도구를 불러오지 못했어요. 인터넷 연결을 확인하세요.',
   manualPanel:'수동 입력 모드예요. 측광 없이 기록만 해요. 빨간 버튼을 누르면 조리개·셔터·장소를 직접 넣어 저장합니다.',
@@ -508,9 +512,10 @@ en: {
   methodAuto:m => `Auto: this device uses "${m}". Android meters live, iPhone and iPad meter from a photo.`,
   methodDesc:{live:'Live: meters continuously from the camera view.', photo:'Photo: take one shot with the built-in camera and the EV is computed from its shutter, aperture and ISO (EXIF). Most accurate on iPhone.', manual:'Manual: no metering. Enter aperture, shutter and place yourself and just log.'},
   methodChanged:m => `Metering method: ${m}`,
-  photoTake:'📷 Meter from a photo', photoRetake:'📷 Meter again', photoReading:'Reading photo data…',
+  photoTake:'📷 Meter from a photo', photoRetake:'📷 Retake', photoLibShort:'🖼 Library', photoReading:'Reading photo data…',
   photoNoExif:'This photo has no shutter, aperture or ISO data, so it can’t be metered.',
   photoNoExifIos:'iPhone Safari strips exposure data from photos taken straight from a web page. Take a shot with the Camera app, then pick it with "From library".',
+  photoBv:(bv, ev) => `Metered from the photo’s brightness value (Bv ${bv}): EV ${ev}. Not affected by HDR or Night mode.`, meterChipAria:'Change metering (spot → center → average)',
   photoLib:'🖼 From library', toManual:'Log manually without metering', exifFound:n => `${n} tags read`,
   photoMetered:(s, a, i) => `Metered from photo exposure ${a} ${s} ISO ${i}`, exifLoadFail:'Couldn’t load the photo data reader. Check your connection.',
   manualPanel:'Manual mode. No metering, just logging. Tap the red button to enter aperture, shutter and place.',
@@ -901,6 +906,7 @@ function renderMethodUI(){
   $('manualPanel').hidden = m !== 'manual';
   $('photoActions').hidden = m !== 'photo';
   $('photoBtn').textContent = photoMeta ? t('photoRetake') : t('photoTake');
+  $('photoLibBtn').textContent = photoMeta ? t('photoLibShort') : t('photoLib');
   $('photoActions').classList.toggle('top', !!photoMeta);
   $('reticle').style.visibility = (m === 'manual' || (m === 'photo' && !photoMeta)) ? 'hidden' : '';
   if (m !== 'live') renderMetaChip(m === 'photo' ? photoMeta : null);
@@ -932,9 +938,10 @@ async function handlePhoto(input){
   const tt = ex?.ExposureTime, N = ex?.FNumber;
   reading = null;
   if (tt > 0 && N > 0 && iso > 0){
-    photoMeta = {t: tt, iso: +iso, N: +N, photo: true, model: ex?.Model || ''};
+    const bv = typeof ex?.BrightnessValue === 'number' && isFinite(ex.BrightnessValue) ? ex.BrightnessValue : null;
+    photoMeta = {t: tt, iso: +iso, N: +N, bv, photo: true, model: ex?.Model || ''};
     photoNote(''); renderMethodUI(); measure();
-    toast(t('photoMetered', fmtSh(tt), fmtAp(Math.round(N * 10) / 10), iso));
+    toast(bv != null ? t('photoBv', bv.toFixed(1), (bv + 5).toFixed(1)) : t('photoMetered', fmtSh(tt), fmtAp(Math.round(N * 10) / 10), iso));
   } else {
     photoMeta = null; renderMethodUI(); renderLcd();
     const n = ex ? Object.keys(ex).length : 0;
@@ -1033,7 +1040,12 @@ function measure(){
   if (!sw) return;
   if (m === 'live' && manualExp && adaptExposure(fy / fw)) return;
   const lum = sy / sw, meta = m === 'photo' ? photoMeta : exposureMeta();
-  const ev = sceneEV({lum, meta, phoneN: m === 'photo' ? photoMeta.N : settings.phoneN, offset: settings[offKey()] || 0, fallbackBase: settings.fallbackBase});
+  // 아이폰 사진은 HDR·야간 모드로 여러 장을 합성해서 셔터·ISO와 화면 밝기가 맞지 않는다.
+  // 카메라가 직접 잰 장면 밝기(EXIF BrightnessValue, APEX Bv)가 있으면 EV100 = Bv + 5를 쓰고,
+  // 스팟·중앙중점은 사진 평균 대비 상대 밝기만 더한다.
+  const ev = (m === 'photo' && photoMeta.bv != null)
+    ? photoMeta.bv + 5 + (mode === 'avg' ? 0 : log2(lum / (fy / fw))) + (settings[offKey()] || 0)
+    : sceneEV({lum, meta, phoneN: m === 'photo' ? photoMeta.N : settings.phoneN, offset: settings[offKey()] || 0, fallbackBase: settings.fallbackBase});
   reading = {lum, ev, meta, clipFrac: clip / cnt, relToFrame: log2(lum / (fy / fw)), mode};
   renderLcd(); renderMetaChip(meta);
 }
@@ -1118,6 +1130,9 @@ function renderControls(){
   ret.style.left = (settings.meter === 'spot' ? spot.x * 100 : 50) + '%';
   ret.style.top  = (settings.meter === 'spot' ? spot.y * 100 : 50) + '%';
   $('meToggle').setAttribute('aria-pressed', meMode);
+  $('meterChip').textContent = {spot:'SPOT', cw:'CW', avg:'AVG'}[settings.meter];
+  $('meterChip').setAttribute('aria-label', t('meterChipAria'));
+  $('meterChip').hidden = method() === 'manual';
   const r = activeRoll();
   const ecs = []; for (let k = -9; k <= 9; k++) ecs.push(k / 3);
   $('ecSel').innerHTML = ecs.map(v => `<option value="${v}" ${Math.abs(v - (settings.ec || 0)) < 0.01 ? 'selected' : ''}>${fmtEc(v)}</option>`).join('');
@@ -1170,6 +1185,14 @@ function renderControls(){
     else if (e.key === 'Home' || e.key === 'Escape'){ setShift(0); e.preventDefault(); }
   });
 })();
+$('meterChip').addEventListener('click', e => {
+  e.stopPropagation();
+  const order = ['spot', 'cw', 'avg'];
+  settings.meter = order[(order.indexOf(settings.meter) + 1) % 3]; saveSettings();
+  if (settings.meter === 'spot') spot = {x: .5, y: .5};
+  renderControls(); measure();
+  toast(t({spot:'spot', cw:'cw', avg:'avg'}[settings.meter]));
+});
 $('methodSeg').onclick = e => {
   const v = e.target.dataset?.v; if (!v) return;
   const before = method();
@@ -1282,7 +1305,7 @@ $('logYes').onclick = async () => {
     meCompEV: meMode ? -Math.round(meCompStops() * 10) / 10 : 0,
     ecEV: Math.round((settings.ec || 0) * 10) / 10,
     meterMode: snap?.mode || settings.meter,
-    meterSource: m === 'manual' ? 'manual' : m === 'photo' ? 'photo-exif' : snap?.meta?.locked ? 'locked-exposure' : snap?.meta ? 'exposure-metadata' : 'calibrated',
+    meterSource: m === 'manual' ? 'manual' : m === 'photo' ? (photoMeta?.bv != null ? 'photo-bv' : 'photo-exif') : snap?.meta?.locked ? 'locked-exposure' : snap?.meta ? 'exposure-metadata' : 'calibrated',
     lens: $('lLens').value.trim(), note: $('lNote').value.trim(), place: $('lPlace').value.trim(),
     lat: typed ? typed.lat : fix ? +fix.coords.latitude.toFixed(6) : null,
     lon: typed ? typed.lon : fix ? +fix.coords.longitude.toFixed(6) : null,
