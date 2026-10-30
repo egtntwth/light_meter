@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1b1d1c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Film Meter Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 단독 노출계 본체 — 흑연색 바디, 회녹색 반사형 LCD 표시부, 빨간 측광 버튼 */
+:root{
+  --body:#1b1d1c; --body-2:#262928; --line:#3a3e3c;
+  --ink:#e9ece8; --ink-dim:#9aa19c;
+  --lcd:#b9c2ae; --lcd-ink:#1d2219; --lcd-dim:#5d6655;
+  --red:#d2412f; --red-text:#ff6a55; --ok:#7fb069; --warn:#e0a83a;
+  --f-ui:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--body);color:var(--ink);font:15px/1.5 var(--f-ui);-webkit-tap-highlight-color:transparent;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+h1,h2{margin:0;text-wrap:balance;font-weight:700}
+h1{font-size:22px;letter-spacing:-.01em}
+h2{font-size:17px}
+.label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.btn{appearance:none;border:1px solid var(--line);background:var(--body-2);border-radius:10px;padding:11px 14px;font-weight:500;cursor:pointer;text-align:center}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);color:var(--body);border-color:var(--ink)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{background:transparent}
+.btn.small{padding:7px 10px;font-size:13px}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field input,.field select,.field textarea,.inp{background:var(--body-2);border:1px solid var(--line);border-radius:8px;padding:10px 11px;width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.panel{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--body-2)}
+.muted{color:var(--ink-dim);font-size:13px}
+.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink-dim)}
+.chip.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 50%,transparent)}
+.chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 50%,transparent)}
+.chip.me{color:var(--body);background:var(--warn);border-color:var(--warn);font-weight:600}
+.over{color:var(--red-text)!important}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.topbar .title{flex:1;min-width:0}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.list>div{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
+.list>div:first-child{border-top:0}
+.lang{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--ink-dim);padding:5px 10px;font-size:12px;font-family:var(--f-num);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--body);font-weight:600}
+
+/* 촬영 화면 */
+#shoot .wrap{padding-block:10px 16px}
+.finder{position:relative;width:100%;aspect-ratio:3/4;max-height:50vh;border-radius:14px;overflow:hidden;background:#000;touch-action:manipulation}
+.finder video{width:100%;height:100%;object-fit:cover;display:block}
+.finder .msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;color:var(--ink-dim);font-size:14px}
+.finder .badge{position:absolute;left:10px;top:10px}
+.reticle{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border:1.5px solid rgba(255,255,255,.85);border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.reticle.cw{width:48%;height:auto;aspect-ratio:1;margin:0;transform:translate(-50%,-50%);border-style:dashed;border-color:rgba(255,255,255,.5)}
+.reticle.avg{display:none}
+.lcd{background:var(--lcd);color:var(--lcd-ink);border-radius:12px;padding:12px 14px;margin-top:12px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.25);display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:end}
+.lcd .k{font-size:10px;letter-spacing:.14em;color:var(--lcd-dim);font-family:var(--f-num)}
+.lcd .ev{font-family:var(--f-num);font-size:34px;font-weight:600;line-height:1}
+.lcd .combo{font-family:var(--f-num);font-size:28px;font-weight:600;line-height:1;text-align:right;white-space:nowrap}
+.lcd .sub{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;font-family:var(--f-num);font-size:12px;color:var(--lcd-dim);border-top:1px solid rgba(29,34,25,.18);padding-top:6px;margin-top:4px;flex-wrap:wrap}
+.lcd.held{outline:2px solid var(--lcd-ink);outline-offset:-4px}
+.lcd{touch-action:pan-y;cursor:ew-resize;user-select:none;-webkit-user-select:none}
+.lcd:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.lcd.dragging{box-shadow:inset 0 2px 10px rgba(0,0,0,.4)}
+.strip{grid-column:1/-1;display:flex;justify-content:center;font-family:var(--f-num);font-size:12px;color:var(--lcd-dim);overflow:hidden;white-space:nowrap;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);
+  border-top:1px solid rgba(29,34,25,.18);padding-top:6px;margin-top:2px}
+.strip span{flex:none;width:96px;text-align:center;position:relative}
+.strip span.on{color:var(--lcd-ink);font-weight:600}
+.strip span.on::before{content:"";position:absolute;left:50%;top:-7px;width:0;height:0;border:4px solid transparent;border-top-color:var(--lcd-ink);transform:translateX(-50%)}
+.strip span.void{visibility:hidden}
+.lcd .shift{font-weight:600;color:var(--lcd-ink)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;padding:8px 6px;font-size:13px;color:var(--ink-dim);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--body);font-weight:600}
+.me-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.me-toggle{border:1px solid var(--line);background:transparent;color:var(--ink-dim);border-radius:10px;padding:8px 12px;font-family:var(--f-num);font-weight:600;cursor:pointer}
+.me-toggle[aria-pressed="true"]{background:var(--warn);color:var(--body);border-color:var(--warn)}
+.me-row select{background:var(--body-2);border:1px solid var(--line);border-radius:8px;padding:7px 8px}
+.shutter-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+.shutter{width:76px;height:76px;border-radius:50%;border:4px solid var(--ink);background:var(--red);cursor:pointer;flex:none;box-shadow:0 0 0 4px var(--body) inset}
+.shutter:active{transform:scale(.96)}
+.counter{font-family:var(--f-num);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1}
+.counter small{display:block;font-size:11px;font-weight:400;color:var(--ink-dim)}
+
+/* 바텀 시트 */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:560px;background:var(--body-2);border-radius:18px 18px 0 0;border-top:1px solid var(--line);
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:90vh;overflow:auto}
+.sheet .field input,.sheet .field select,.sheet .field textarea,.sheet .inp{background:var(--body)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--body);padding:10px 16px;border-radius:99px;font-size:14px;font-weight:500;z-index:30;max-width:90vw;text-align:center}
+.toast.bad{background:var(--red);color:#fff}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-weight:500;color:var(--ink-dim);font-size:11px;letter-spacing:.08em}
+tr.me-sub td:first-child{color:var(--warn)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- 홈 -->
+<section id="home"><div class="wrap stack">
+  <div class="row">
+    <div class="grow">
+      <div class="label">Film Meter Log</div>
+      <h1 data-i18n="appSub"></h1>
+    </div>
+    <div class="lang" role="group" aria-label="Language"><button data-lang="ko">한</button><button data-lang="en">EN</button></div>
+  </div>
+  <div id="activeBox"></div>
+  <button class="btn primary" id="newRollBtn" data-i18n="newRoll"></button>
+  <div class="stack">
+    <div class="row"><h2 class="grow" data-i18n="pastRolls"></h2><button class="btn small ghost" id="settingsBtn" data-i18n="meterSettings"></button></div>
+    <div id="pastList"></div>
+  </div>
+</div></section>
+
+<!-- 롤 설정 -->
+<section id="setup" hidden><div class="wrap stack">
+  <div class="topbar"><button class="btn small ghost" data-go="home" data-i18n="back"></button><h1 class="title" data-i18n="newRollTitle"></h1></div>
+  <div class="field" id="presetField"><span class="label" data-i18n="loadPreset"></span><select id="presetSel"></select></div>
+  <div class="grid2">
+    <label class="field"><span class="label" data-i18n="format"></span><select id="fFormat"></select></label>
+    <label class="field"><span class="label" data-i18n="frames"></span><input id="fFrames" type="number" inputmode="numeric" min="1" max="200"></label>
+  </div>
+  <label class="field"><span class="label" data-i18n="film"></span><input id="fFilm" data-i18n-ph="filmPh" list="filmList"></label>
+  <datalist id="filmList">
+    <option value="Kodak Portra 160"><option value="Kodak Portra 400"><option value="Kodak Portra 800">
+    <option value="Kodak Gold 200"><option value="Kodak UltraMax 400"><option value="Kodak Ektar 100">
+    <option value="Kodak Tri-X 400"><option value="Kodak T-Max 400"><option value="Fujifilm C200">
+    <option value="Ilford HP5 Plus"><option value="Ilford FP4 Plus"><option value="Ilford Delta 3200">
+    <option value="CineStill 800T"><option value="Kodak Ektachrome E100">
+  </datalist>
+  <div class="grid2">
+    <label class="field"><span class="label" data-i18n="boxIso"></span><input id="fBoxIso" type="number" inputmode="numeric" min="1"></label>
+    <label class="field"><span class="label" data-i18n="ei"></span><input id="fEi" type="number" inputmode="numeric" min="1"></label>
+  </div>
+  <div class="muted" id="pushNote"></div>
+  <div class="grid2">
+    <label class="field"><span class="label" data-i18n="rollNo"></span><input id="fRollNo" type="number" inputmode="numeric" min="1"></label>
+    <label class="field"><span class="label" data-i18n="camera"></span><input id="fCamera" data-i18n-ph="cameraPh"></label>
+  </div>
+  <label class="field"><span class="label" data-i18n="lens"></span><input id="fLens" data-i18n-ph="lensPh"></label>
+  <label class="field"><span class="label" data-i18n="note"></span><textarea id="fNote" rows="2" data-i18n-ph="notePh"></textarea></label>
+  <label class="row muted"><input type="checkbox" id="fSavePreset"> <span data-i18n="savePreset"></span></label>
+  <button class="btn red" id="startRollBtn" data-i18n="startRoll"></button>
+</div></section>
+
+<!-- 촬영 -->
+<section id="shoot" hidden><div class="wrap">
+  <div class="topbar">
+    <button class="btn small ghost" id="shootBack" data-i18n="home"></button>
+    <div class="title"><div class="label" id="rollTag">ROLL</div><div class="muted" id="rollFilm"></div></div>
+    <div class="counter" id="frameCounter">1/36</div>
+  </div>
+  <div class="finder" id="finder">
+    <video id="video" playsinline muted autoplay></video>
+    <div class="reticle" id="reticle"></div>
+    <span class="chip me badge" id="meBadge" hidden></span>
+    <div class="msg" id="finderMsg"></div>
+  </div>
+  <div class="lcd" id="lcd" tabindex="0" role="slider" aria-valuemin="-20" aria-valuemax="20" aria-valuenow="0" data-i18n-aria="shiftAria">
+    <div class="k">EV₁₀₀</div><div class="k" style="text-align:right" id="lcdIsoLabel">ISO 400</div>
+    <div class="ev" id="lcdEv">--.-</div><div class="combo" id="lcdCombo">f/-- --</div>
+    <div class="strip" id="lcdStrip" aria-hidden="true"></div>
+    <div class="sub"><span id="lcdMode">LIVE</span><span class="shift" id="lcdShift"></span><span id="lcdDiff"></span><span id="lcdWarn"></span></div>
+  </div>
+  <div class="muted" style="margin-top:6px;font-size:12px" data-i18n="shiftHint"></div>
+  <div class="stack" style="margin-top:12px">
+    <div class="seg" id="meterSeg" role="group">
+      <button data-v="spot" data-i18n="spot"></button><button data-v="cw" data-i18n="cw"></button><button data-v="avg" data-i18n="avg"></button>
+    </div>
+    <div class="row">
+      <div class="seg" id="prioSeg" role="group" style="flex:none">
+        <button data-v="A" data-i18n="prioA"></button><button data-v="S" data-i18n="prioS"></button>
+      </div>
+      <select id="prioValue" class="grow inp" style="padding:8px 10px;border-radius:10px"></select>
+    </div>
+    <div class="me-row">
+      <button class="me-toggle" id="meToggle" aria-pressed="false">ME</button>
+      <span class="muted" data-i18n="me"></span>
+      <label class="muted row" style="gap:6px"><span data-i18n="mePlan"></span><select id="mePlan"></select></label>
+      <label class="muted row" style="gap:6px"><input type="checkbox" id="meComp"><span data-i18n="meComp"></span></label>
+    </div>
+    <div class="row muted"><span id="metaChip" class="chip"></span><span id="locChip" class="chip"></span><span class="grow"></span><button class="btn small ghost" id="shootSettings" data-i18n="settingsCal"></button></div>
+  </div>
+  <div class="shutter-row">
+    <button class="btn" id="reviewBtn" data-i18n="viewLog"></button>
+    <button class="shutter" id="shutterBtn" data-i18n-aria="shutterAria"></button>
+    <button class="btn" id="endRollBtn" data-i18n="endRoll"></button>
+  </div>
+</div></section>
+
+<!-- 롤 리뷰 -->
+<section id="review" hidden><div class="wrap stack">
+  <div class="topbar"><button class="btn small ghost" id="reviewBack" data-i18n="back"></button><h1 class="title" id="reviewTitle"></h1></div>
+  <div class="panel stack" id="reviewMeta"></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th data-i18n="aperture"></th><th data-i18n="shutter"></th><th>EV</th><th data-i18n="thTime"></th><th data-i18n="thLoc"></th><th data-i18n="lens"></th><th data-i18n="note"></th><th></th></tr></thead>
+    <tbody id="shotRows"></tbody>
+  </table></div>
+  <div class="row">
+    <button class="btn grow" id="expJson" data-i18n="expJson"></button>
+    <button class="btn grow" id="expCsv" data-i18n="expCsv"></button>
+  </div>
+  <button class="btn primary" id="shareBtn" data-i18n="share" hidden></button>
+  <button class="btn red" id="finishBtn" data-i18n="finish"></button>
+  <button class="btn ghost" id="resumeBtn" data-i18n="resume" hidden></button>
+  <button class="btn ghost" id="deleteRollBtn" style="color:var(--red-text)" data-i18n="deleteRoll"></button>
+</div></section>
+
+<!-- 기록 시트 -->
+<div class="sheet-bg" id="logSheet" hidden><div class="sheet stack" role="dialog" aria-labelledby="logTitle">
+  <div class="row"><h2 class="grow" id="logTitle" data-i18n="logTitle"></h2><span class="chip me" id="logMe" hidden></span><span class="chip num" id="logEv"></span></div>
+  <div class="muted" data-i18n="logDesc"></div>
+  <div class="grid2">
+    <label class="field"><span class="label" data-i18n="aperture"></span><select id="lAp"></select></label>
+    <label class="field"><span class="label" data-i18n="shutter"></span><select id="lSh"></select></label>
+  </div>
+  <div class="grid2">
+    <label class="field"><span class="label" data-i18n="frameNo"></span><input id="lFrame" type="number" inputmode="numeric" min="0"></label>
+    <label class="field"><span class="label" data-i18n="lens"></span><input id="lLens"></label>
+  </div>
+  <label class="field"><span class="label" data-i18n="note"></span><input id="lNote" data-i18n-ph="optional"></label>
+  <div class="muted" id="lOver" hidden></div>
+  <div class="muted" id="lLoc"></div>
+  <div class="row"><button class="btn grow" id="logNo" data-i18n="logNo"></button><button class="btn primary grow" id="logYes" data-i18n="logYes"></button></div>
+</div></div>
+
+<!-- 롤 종료 확인 시트 -->
+<div class="sheet-bg" id="endSheet" hidden><div class="sheet stack" role="dialog" aria-labelledby="endTitle">
+  <h2 id="endTitle" data-i18n="endTitle"></h2>
+  <div class="muted" id="endText"></div>
+  <div class="row"><button class="btn grow" id="endCancel" data-i18n="endCancel"></button><button class="btn red grow" id="endConfirm" data-i18n="endConfirm"></button></div>
+</div></div>
+
+<!-- 삭제 확인 시트 -->
+<div class="sheet-bg" id="delSheet" hidden><div class="sheet stack" role="dialog" aria-labelledby="delTitle">
+  <h2 id="delTitle" data-i18n="delTitle"></h2>
+  <div class="muted" id="delText"></div>
+  <div class="row"><button class="btn grow" id="delCancel" data-i18n="cancel"></button><button class="btn red grow" id="delConfirm" data-i18n="del"></button></div>
+</div></div>
+
+<!-- 설정 시트 -->
+<div class="sheet-bg" id="setSheet" hidden><div class="sheet stack" role="dialog" aria-labelledby="setTitle">
+  <div class="row"><h2 class="grow" id="setTitle" data-i18n="meterSettings"></h2>
+    <div class="lang" role="group" aria-label="Language"><button data-lang="ko">한</button><button data-lang="en">EN</button></div></div>
+  <div class="muted" id="setMeta"></div>
+  <div class="grid2">
+    <label class="field"><span class="label" data-i18n="phoneN"></span><input id="sPhoneN" type="number" step="0.1" min="1" inputmode="decimal"></label>
+    <label class="field"><span class="label" data-i18n="step"></span><select id="sStep"><option value="full" data-i18n="full"></option><option value="third" data-i18n="third"></option></select></label>
+  </div>
+  <label class="field"><span class="label" data-i18n="offset"></span><input id="sOffset" type="number" step="0.1" inputmode="decimal"></label>
+  <div class="panel stack">
+    <div class="label" data-i18n="calTitle"></div>
+    <div class="muted" data-i18n="calDesc"></div>
+    <div class="row"><input id="sRef" type="number" step="0.1" inputmode="decimal" placeholder="12" class="grow inp"><button class="btn" id="sCal" data-i18n="calBtn"></button></div>
+  </div>
+  <button class="btn primary" id="setClose" data-i18n="close"></button>
+</div></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+'use strict';
+/* ---------- 언어 ---------- */
+const I18N = {
+ko: {
+  appSub:'필름 노출계 · 촬영 기록', newRoll:'새 롤 시작', pastRolls:'지난 롤', meterSettings:'측광 설정',
+  back:'← 뒤로', home:'← 홈', newRollTitle:'새 롤', loadPreset:'프리셋 불러오기', none:'선택 안 함',
+  format:'포맷', frames:'컷 수', film:'필름', filmPh:'예: Kodak Portra 400', boxIso:'박스 ISO', ei:'노출 ISO (EI)',
+  rollNo:'롤 번호', camera:'카메라', cameraPh:'예: Nikon FM2', lens:'렌즈', lensPh:'예: 50mm f/1.8',
+  note:'메모', notePh:'현상소, 촬영 목적 등', savePreset:'카메라·필름·렌즈 조합을 프리셋으로 저장', startRoll:'롤 시작하고 측광하기',
+  push:(up, n) => `${up ? '푸시' : '풀'} ${n}스톱 — 현상소에 알려주세요.`,
+  half:'하프프레임', sheet:'시트', framesN:n => `${n}컷`,
+  camStarting:'카메라를 켜는 중…', camUnsupported:'이 브라우저에서는 카메라를 쓸 수 없어요. HTTPS 주소로 열었는지 확인하세요.',
+  camDenied:'카메라 권한이 거부됐어요. 브라우저 설정에서 이 사이트의 카메라를 허용해 주세요.', camFail:m => '카메라를 열 수 없어요: ' + m,
+  spot:'스팟', cw:'중앙중점', avg:'평균', prioA:'조리개 우선', prioS:'셔터 우선',
+  me:'다중노출', mePlan:'횟수', meComp:'자동 보정', meFree:'자유',
+  meBadge:(i, n) => `ME ${i}${n ? '/' + n : ''}`, meOn:'다중노출 켜짐: 다음 기록부터 같은 컷에 겹쳐 저장해요.', meOff:'다중노출 꺼짐: 다음 기록은 새 컷이에요.',
+  meDone:f => `${f}번 컷 다중노출 완료`, meCompOn:n => `노출당 −${n} EV`,
+  metaChecking:'노출 정보 확인 중', metaAbs:(s, i) => `절대 측광 · ${s} ISO${i}`, metaCal:'보정 기반 측광',
+  locWait:'위치 대기', locAcc:n => `위치 ±${n}m`, locNo:'위치 사용 불가',
+  settingsCal:'측광 설정 · 보정', viewLog:'기록 보기', endRoll:'롤 종료', shutterAria:'측광하고 기록',
+  vsFrame:'vs 전체', clipW:'하이라이트 포화', darkW:'너무 어두움',
+  logTitle:'사진 찍었나요?', logDesc:'찍었다면 실제로 쓴 값을 확인하고 기록하세요. 위치와 시각이 같이 저장됩니다.',
+  aperture:'조리개', shutter:'셔터', frameNo:'컷 번호', optional:'선택',
+  locUsing:n => `현재 위치 사용 (오차 약 ${n}m)`, locFetching:'위치를 가져오는 중… 기록할 때 다시 시도합니다.', locChecking:'위치 확인 중…',
+  logNo:'안 찍었어요', logYes:'기록하기', skipped:'기록하지 않고 넘어갔어요.',
+  logged:(f, e, noLoc) => `${f}번 컷${e ? ` (${e}번째 노출)` : ''} 기록됨${noLoc ? ' · 위치 없음' : ''}`,
+  overNote:(f, n) => `정해진 ${n}컷을 넘은 ${f}번 컷이에요. 그래도 기록할 수 있어요.`,
+  endTitle:'롤을 종료할까요?', endAuto:n => `${n}컷을 모두 기록했어요. 롤을 종료하고 기록을 내보낼까요? 더 찍을 수 있다면 계속 찍어도 돼요.`,
+  endManual:(a, b) => `${a}/${b}컷 기록됨. 종료하면 지난 롤 목록으로 옮겨지고, 언제든 다시 내보낼 수 있어요.`,
+  endCancel:'계속 찍기', endConfirm:'종료하고 내보내기',
+  delTitle:'삭제할까요?', cancel:'취소', del:'삭제',
+  delRoll:(l, n) => `${l}의 기록 ${n}개가 모두 지워집니다. 먼저 내보내기를 해두세요.`, delShot:l => `${l} 기록을 지웁니다.`, rollDeleted:'롤을 삭제했어요.',
+  phoneN:'폰 렌즈 조리개', step:'값 단계', full:'1 스톱', third:'1/3 스톱', offset:'보정값 (EV)',
+  calTitle:'기준 노출계로 보정', calDesc:'같은 대상을 카메라 노출계나 단독 노출계로 잰 EV(ISO 100 기준)를 입력하면, 지금 측광값과의 차이를 보정값으로 저장합니다.',
+  calBtn:'보정', close:'닫기', calNeed:'기준 EV를 입력하고 촬영 화면에서 대상을 겨눠 주세요.', calDone:'보정했어요.',
+  setMetaAbs:'이 기기는 카메라 노출 정보(셔터·ISO)를 제공해서 절대 측광을 합니다.',
+  setMetaCal:'이 기기는 카메라 노출 정보를 제공하지 않아서, 기준 노출계로 보정한 값을 씁니다.',
+  setMetaNone:'촬영 화면에서 열면 이 기기가 노출 정보를 제공하는지 표시됩니다.',
+  shooting:'촬영 중', ended:'종료됨', noCamera:'카메라 미입력', noLens:'렌즈 미입력', noFilm:'필름 미입력',
+  contMeter:'이어서 측광', thTime:'시각', thLoc:'위치', noShots:'아직 기록된 컷이 없어요.',
+  expJson:'JSON 내보내기', expCsv:'CSV 내보내기', share:'공유 (파일 앱·드라이브로 보내기)',
+  finish:'롤 종료하기', resume:'이 롤 이어서 찍기', deleteRoll:'이 롤 삭제', saved:n => `${n} 저장`,
+  shareFail:'공유하지 못했어요. 내보내기 버튼을 써 주세요.', storageFail:'저장 공간에 쓸 수 없어요. 바로 내보내기 해두세요.',
+  emptyPast:'끝낸 롤이 여기 쌓입니다. 롤마다 JSON/CSV로 내보내서 스캔본에 메타데이터를 입힐 때 씁니다.',
+  frameLabel:(f, e) => `${f}번 컷${e ? `-${e}` : ''}`, pushShort:up => up ? '푸시' : '풀', exposures:n => `노출 ${n}회`,
+  shiftHint:'리드아웃을 좌우로 드래그하면 같은 노출로 조합만 바뀌어요 (프로그램 시프트). 두 번 탭하면 원래대로.',
+  shiftAria:'프로그램 시프트: 좌우 화살표로 조합 변경', shiftReset:'시프트 초기화'
+},
+en: {
+  appSub:'Light meter & shot log for film', newRoll:'Start new roll', pastRolls:'Past rolls', meterSettings:'Meter settings',
+  back:'← Back', home:'← Home', newRollTitle:'New roll', loadPreset:'Load preset', none:'None',
+  format:'Format', frames:'Frames', film:'Film', filmPh:'e.g. Kodak Portra 400', boxIso:'Box ISO', ei:'Shooting ISO (EI)',
+  rollNo:'Roll no.', camera:'Camera', cameraPh:'e.g. Nikon FM2', lens:'Lens', lensPh:'e.g. 50mm f/1.8',
+  note:'Notes', notePh:'Lab, purpose, anything else', savePreset:'Save this camera, film and lens as a preset', startRoll:'Start roll and meter',
+  push:(up, n) => `${up ? 'Push' : 'Pull'} ${n} stop${n === '1.0' ? '' : 's'} — tell your lab.`,
+  half:'half-frame', sheet:'sheet', framesN:n => `${n} frames`,
+  camStarting:'Starting camera…', camUnsupported:'This browser can’t use the camera. Make sure the page is opened over HTTPS.',
+  camDenied:'Camera access was denied. Allow the camera for this site in your browser settings.', camFail:m => 'Couldn’t open the camera: ' + m,
+  spot:'Spot', cw:'Center', avg:'Average', prioA:'Aperture priority', prioS:'Shutter priority',
+  me:'Multiple exposure', mePlan:'Shots', meComp:'Auto comp', meFree:'Free',
+  meBadge:(i, n) => `ME ${i}${n ? '/' + n : ''}`, meOn:'Multiple exposure on: the next logs stack onto one frame.', meOff:'Multiple exposure off: the next log is a new frame.',
+  meDone:f => `Frame ${f} multiple exposure done`, meCompOn:n => `−${n} EV per exposure`,
+  metaChecking:'Checking exposure data', metaAbs:(s, i) => `Absolute · ${s} ISO${i}`, metaCal:'Calibrated mode',
+  locWait:'Waiting for location', locAcc:n => `Location ±${n} m`, locNo:'No location',
+  settingsCal:'Settings · Calibrate', viewLog:'View log', endRoll:'End roll', shutterAria:'Meter and log',
+  vsFrame:'vs frame', clipW:'Highlights clipped', darkW:'Too dark',
+  logTitle:'Did you take the shot?', logDesc:'If you did, check the settings you actually used and log it. Location and time are saved with it.',
+  aperture:'Aperture', shutter:'Shutter', frameNo:'Frame', optional:'Optional',
+  locUsing:n => `Using current location (±${n} m)`, locFetching:'Getting location… will retry when you log.', locChecking:'Getting location…',
+  logNo:'Didn’t shoot', logYes:'Log it', skipped:'Skipped. Nothing logged.',
+  logged:(f, e, noLoc) => `Frame ${f}${e ? ` (exposure ${e})` : ''} logged${noLoc ? ' · no location' : ''}`,
+  overNote:(f, n) => `Frame ${f} is past this roll’s ${n} frames. You can still log it.`,
+  endTitle:'End this roll?', endAuto:n => `All ${n} frames logged. End the roll and export? If you have frames left, keep shooting.`,
+  endManual:(a, b) => `${a} of ${b} frames logged. Ended rolls move to Past rolls and can be exported any time.`,
+  endCancel:'Keep shooting', endConfirm:'End and export',
+  delTitle:'Delete?', cancel:'Cancel', del:'Delete',
+  delRoll:(l, n) => `All ${n} entries in ${l} will be removed. Export first if you need them.`, delShot:l => `Remove the entry for ${l}.`, rollDeleted:'Roll deleted.',
+  phoneN:'Phone lens aperture', step:'Steps', full:'Full stops', third:'1/3 stops', offset:'Offset (EV)',
+  calTitle:'Calibrate with a reference meter', calDesc:'Meter the same subject with a camera or handheld meter, enter its EV at ISO 100, and the difference is saved as the offset.',
+  calBtn:'Calibrate', close:'Done', calNeed:'Enter a reference EV and aim at the subject on the meter screen.', calDone:'Calibrated.',
+  setMetaAbs:'This device reports the camera’s shutter and ISO, so readings are absolute.',
+  setMetaCal:'This device doesn’t report exposure data, so readings use your calibration.',
+  setMetaNone:'Open this from the meter screen to see whether this device reports exposure data.',
+  shooting:'Shooting', ended:'Ended', noCamera:'No camera', noLens:'No lens', noFilm:'No film',
+  contMeter:'Continue metering', thTime:'Time', thLoc:'Location', noShots:'No frames logged yet.',
+  expJson:'Export JSON', expCsv:'Export CSV', share:'Share (Files, Drive…)',
+  finish:'End roll', resume:'Resume this roll', deleteRoll:'Delete this roll', saved:n => `Saved ${n}`,
+  shareFail:'Couldn’t share. Use the export buttons instead.', storageFail:'Couldn’t save to this device. Export your roll now.',
+  emptyPast:'Finished rolls collect here. Export each as JSON or CSV to tag your scans with metadata later.',
+  frameLabel:(f, e) => `frame ${f}${e ? `-${e}` : ''}`, pushShort:up => up ? 'push' : 'pull', exposures:n => `${n} exposures`,
+  shiftHint:'Drag the readout sideways to trade aperture for shutter at the same exposure (program shift). Double-tap to reset.',
+  shiftAria:'Program shift: use left and right arrows to change the pair', shiftReset:'Shift reset'
+}};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- 상수 ---------- */
+const FORMATS = [
+  {id:'135',      name:'135 (35mm)',         frames:36},
+  {id:'135-24',   name:'135 · 24',           frames:24},
+  {id:'135-half', name:'135 · {half}',       frames:72},
+  {id:'120-645',  name:'120 · 6×4.5',        frames:16},
+  {id:'120-66',   name:'120 · 6×6',          frames:12},
+  {id:'120-67',   name:'120 · 6×7',          frames:10},
+  {id:'120-68',   name:'120 · 6×8',          frames:9},
+  {id:'120-69',   name:'120 · 6×9',          frames:8},
+  {id:'110',      name:'110',                frames:24},
+  {id:'4x5',      name:'4×5 {sheet}',        frames:10},
+  {id:'8x10',     name:'8×10 {sheet}',       frames:10},
+];
+const AP_FULL  = [1,1.4,2,2.8,4,5.6,8,11,16,22,32,45,64];
+const AP_THIRD = [1,1.1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32,36,40,45,51,57,64];
+const SH_FULL  = [1/8000,1/4000,1/2000,1/1000,1/500,1/250,1/125,1/60,1/30,1/15,1/8,1/4,1/2,1,2,4,8,15,30];
+const SH_THIRD = [1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,0.3,0.4,0.5,0.6,0.8,1,1.3,1.6,2,2.5,3.2,4,5,6,8,10,13,15,20,25,30];
+const fmtAp = n => 'f/' + (n < 10 && n % 1 ? n.toFixed(1) : String(n));
+function fmtSh(t){
+  if (t < 1 && (t < 0.3 || Math.abs(1 / t - Math.round(1 / t)) < 0.01)) return '1/' + Math.round(1 / t);
+  return (t % 1 ? t.toFixed(1) : String(t)) + 's';
+}
+const log2 = Math.log2;
+
+/* ---------- 노출 계산 (순수 함수) ---------- */
+// 장면 EV100: 카메라가 실제로 쓴 노출 + (측광 영역 휘도 / 18% 중간회색)
+function sceneEV({lum, meta, phoneN, offset, fallbackBase}){
+  if (!(lum > 1e-5)) return -Infinity;
+  const ratio = log2(lum / 0.18);
+  if (meta) return log2(phoneN * phoneN / meta.t) - log2(meta.iso / 100) + ratio + offset;
+  return fallbackBase + ratio;
+}
+// EV100, ISO, 우선 모드, 다중노출 보정(스톱) → 가장 가까운 표준값과 오차(+는 과다)
+function solve({ev100, iso, prio, fixed, step, comp = 0}){
+  const ev = ev100 + log2(iso / 100) + comp;
+  const aps = step === 'third' ? AP_THIRD : AP_FULL;
+  const shs = step === 'third' ? SH_THIRD : SH_FULL;
+  if (prio === 'A'){
+    const N = fixed, tIdeal = N * N / Math.pow(2, ev);
+    let best = shs[0];
+    for (const s of shs) if (Math.abs(log2(s / tIdeal)) < Math.abs(log2(best / tIdeal))) best = s;
+    return {N, t: best, diff: log2(best / tIdeal)};
+  }
+  const t = fixed, nIdeal = Math.sqrt(t * Math.pow(2, ev));
+  let best = aps[0];
+  for (const a of aps) if (Math.abs(log2(a / nIdeal)) < Math.abs(log2(best / nIdeal))) best = a;
+  return {N: best, t, diff: 2 * log2(nIdeal / best)};
+}
+// 프로그램 시프트: 우선 모드의 고정값을 단계 목록에서 shift칸 옮긴 뒤 같은 EV로 나머지를 다시 계산
+function shiftedSolve({ev100, iso, prio, fixed, step, comp = 0, shift = 0}){
+  const list = prio === 'A' ? (step === 'third' ? AP_THIRD : AP_FULL) : (step === 'third' ? SH_THIRD : SH_FULL);
+  const i0 = list.reduce((bi, v, i) => Math.abs(log2(v / fixed)) < Math.abs(log2(list[bi] / fixed)) ? i : bi, 0);
+  const i = Math.max(0, Math.min(list.length - 1, i0 + shift));
+  return {...solve({ev100, iso, prio, fixed: list[i], step, comp}), shift: i - i0, index: i, len: list.length};
+}
+// 다음에 기록될 컷/노출 번호
+function nextSlot(r){
+  const maxF = r.shots.reduce((m, s) => Math.max(m, s.frame), 0);
+  if (r.meOpen) return {frame: r.meOpen.frame, exposure: r.meOpen.count + 1};
+  return {frame: maxF + 1, exposure: 0};
+}
+// 내보내기용: 컷 단위로 묶기
+function groupFrames(shots){
+  const map = new Map();
+  for (const s of shots){
+    if (!map.has(s.frame)) map.set(s.frame, []);
+    map.get(s.frame).push(s);
+  }
+  return [...map.entries()].sort((a, b) => a[0] - b[0]).map(([frame, ex]) => {
+    ex.sort((a, b) => (a.exposure || 1) - (b.exposure || 1));
+    const multi = ex.length > 1 || ex.some(e => e.multi);
+    return {frame, multipleExposure: multi, exposureCount: ex.length,
+      exposures: ex.map(({frame, ...rest}) => rest)};
+  });
+}
+window.__meter = {sceneEV, solve, shiftedSolve, nextSlot, groupFrames};
+
+/* ---------- 저장소 ---------- */
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('fml.' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v){ try { localStorage.setItem('fml.' + k, JSON.stringify(v)); } catch { toast(t('storageFail'), true); } }
+};
+let rolls    = store.get('rolls', []);
+let presets  = store.get('presets', []);
+let settings = Object.assign({
+  lang: (navigator.language || 'ko').startsWith('ko') ? 'ko' : 'en',
+  phoneN:1.8, offset:0, fallbackBase:11, step:'full', meter:'spot', prio:'A', apFixed:8, shFixed:1/125,
+  mePlan:2, meComp:true
+}, store.get('settings', {}));
+// 예전 버전 기록 호환
+for (const r of rolls){ r.meOpen ??= null; for (const s of r.shots){ s.exposure ??= 1; s.multi ??= false; } }
+const saveRolls = () => store.set('rolls', rolls);
+const saveSettings = () => store.set('settings', settings);
+const activeRoll = () => rolls.find(r => !r.endedAt);
+
+/* ---------- i18n ---------- */
+function t(key, ...a){ const v = (I18N[settings.lang] || I18N.ko)[key] ?? I18N.ko[key] ?? key; return typeof v === 'function' ? v(...a) : v; }
+const fmtName = f => f ? f.name.replace(/\{(\w+)\}/g, (_, k) => t(k)) : '';
+const formatOf = r => fmtName(FORMATS.find(f => f.id === r.format)) || r.format;
+function applyLang(){
+  document.documentElement.lang = settings.lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria)));
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === settings.lang));
+  const cur = $('fFormat').value;
+  $('fFormat').innerHTML = FORMATS.map(f => `<option value="${f.id}">${esc(fmtName(f))}</option>`).join('');
+  if (cur) $('fFormat').value = cur;
+  $('mePlan').innerHTML = [2,3,4,5,6].map(n => `<option value="${n}">${n}</option>`).join('') + `<option value="0">${t('meFree')}</option>`;
+  $('mePlan').value = settings.mePlan;
+  updatePush(); renderPresets();
+  if (!$('home').hidden) renderHome();
+  if (!$('shoot').hidden){ renderShootHeader(); renderControls(); renderLcd(); renderMetaChip(reading?.meta); renderLocChip(); }
+  if (!$('review').hidden) renderReview();
+}
+document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { settings.lang = b.dataset.lang; saveSettings(); applyLang(); });
+
+/* ---------- 유틸 ---------- */
+function localISO(d){
+  const p = n => String(n).padStart(2, '0');
+  const off = -d.getTimezoneOffset(), sign = off >= 0 ? '+' : '-', a = Math.abs(off);
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${sign}${p(Math.floor(a/60))}:${p(a%60)}`;
+}
+let toastTimer;
+function toast(msg, bad){ const el = $('toast'); el.textContent = msg; el.className = 'toast' + (bad ? ' bad' : ''); el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 2600); }
+function show(id){
+  for (const s of ['home','setup','shoot','review']) $(s).hidden = s !== id;
+  window.scrollTo(0, 0);
+  if (id === 'shoot') startShoot(); else stopShoot();
+  if (id === 'home') renderHome();
+}
+document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
+function counterHTML(r){
+  const s = nextSlot(r), over = s.frame > r.frames;
+  return `<span class="${over ? 'over' : ''}">${s.frame}/${r.frames}</span>`;
+}
+
+/* ---------- 홈 ---------- */
+const rollLabel = r => `Roll ${r.rollNo} · ${r.film || t('noFilm')}`;
+function renderHome(){
+  const a = activeRoll();
+  $('activeBox').innerHTML = a ? `
+    <div class="panel stack">
+      <div class="row"><span class="chip ok">${t('shooting')}</span>${a.meOpen ? `<span class="chip me">ME</span>` : ''}<span class="muted grow">${esc(formatOf(a))}</span><span class="num counter" style="font-size:18px">${counterHTML(a)}</span></div>
+      <h2>${esc(rollLabel(a))}</h2>
+      <div class="muted">${esc([a.camera, a.lens, 'EI ' + a.ei].filter(Boolean).join(' · '))}</div>
+      <div class="row"><button class="btn primary grow" id="contBtn">${t('contMeter')}</button><button class="btn" id="contReview">${t('viewLog')}</button></div>
+    </div>` : '';
+  $('newRollBtn').hidden = !!a;
+  if (a){ $('contBtn').onclick = () => show('shoot'); $('contReview').onclick = () => openReview(a.id); }
+  const past = rolls.filter(r => r.endedAt).sort((x, y) => y.startedAt.localeCompare(x.startedAt));
+  $('pastList').innerHTML = past.length ? `<div class="list">${past.map(r => `
+      <div data-id="${r.id}" style="cursor:pointer"><div class="grow"><div>${esc(rollLabel(r))}</div>
+      <div class="muted">${esc(r.startedAt.slice(0,10))} · ${t('framesN', groupFrames(r.shots).length)} · ${esc(r.camera || '')}</div></div><span class="muted">›</span></div>`).join('')}</div>`
+    : `<div class="panel muted">${t('emptyPast')}</div>`;
+  $('pastList').querySelectorAll('[data-id]').forEach(el => el.onclick = () => openReview(el.dataset.id));
+}
+$('settingsBtn').onclick = openSettings;
+
+/* ---------- 롤 설정 ---------- */
+$('fFormat').onchange = () => { $('fFrames').value = FORMATS.find(f => f.id === $('fFormat').value).frames; };
+function updatePush(){
+  const b = +$('fBoxIso').value, e = +$('fEi').value;
+  $('pushNote').textContent = b > 0 && e > 0 && b !== e ? t('push', e > b, Math.abs(log2(e / b)).toFixed(1)) : '';
+}
+$('fBoxIso').oninput = () => { if (!$('fEi').dataset.touched) $('fEi').value = $('fBoxIso').value; updatePush(); };
+$('fEi').oninput = () => { $('fEi').dataset.touched = '1'; updatePush(); };
+function renderPresets(){
+  $('presetField').hidden = !presets.length;
+  $('presetSel').innerHTML = `<option value="">${t('none')}</option>` + presets.map((p, i) => `<option value="${i}">${esc(p.name)}</option>`).join('');
+}
+$('presetSel').onchange = () => {
+  const p = presets[$('presetSel').value]; if (!p) return;
+  $('fFormat').value = p.format; $('fFrames').value = p.frames; $('fFilm').value = p.film;
+  $('fBoxIso').value = p.boxIso; $('fEi').value = p.ei; $('fEi').dataset.touched = '1';
+  $('fCamera').value = p.camera; $('fLens').value = p.lens; updatePush();
+};
+$('newRollBtn').onclick = () => {
+  renderPresets();
+  const last = rolls.slice().sort((x, y) => y.startedAt.localeCompare(x.startedAt))[0];
+  $('fFormat').value = last?.format || '135'; $('fFrames').value = last?.frames || 36;
+  $('fFilm').value = ''; $('fBoxIso').value = last?.boxIso || 400; $('fEi').value = last?.ei || 400; delete $('fEi').dataset.touched;
+  $('fRollNo').value = rolls.reduce((m, r) => Math.max(m, r.rollNo), 0) + 1;
+  $('fCamera').value = last?.camera || ''; $('fLens').value = last?.lens || ''; $('fNote').value = ''; $('fSavePreset').checked = false;
+  updatePush(); show('setup');
+};
+$('startRollBtn').onclick = () => {
+  const r = {
+    id: 'r' + Date.now().toString(36), rollNo: +$('fRollNo').value || 1,
+    format: $('fFormat').value, frames: Math.max(1, +$('fFrames').value || 36),
+    film: $('fFilm').value.trim(), boxIso: +$('fBoxIso').value || 400, ei: +$('fEi').value || +$('fBoxIso').value || 400,
+    camera: $('fCamera').value.trim(), lens: $('fLens').value.trim(), note: $('fNote').value.trim(),
+    startedAt: localISO(new Date()), endedAt: null, shots: [], meOpen: null, endPrompted: false
+  };
+  if ($('fSavePreset').checked){
+    const name = [r.camera, r.film, r.lens].filter(Boolean).join(' · ') || 'Preset';
+    presets = presets.filter(p => p.name !== name);
+    presets.unshift({name, format:r.format, frames:r.frames, film:r.film, boxIso:r.boxIso, ei:r.ei, camera:r.camera, lens:r.lens});
+    store.set('presets', presets.slice(0, 12));
+  }
+  meMode = false;
+  rolls.push(r); saveRolls(); show('shoot');
+};
+
+/* ---------- 촬영: 카메라 ---------- */
+const video = $('video');
+let stream = null, track = null, loopTimer = null, geoWatch = null, lastFix = null, wakeLock = null, geoErr = false;
+let spot = {x:.5, y:.5};
+let reading = null;
+let meMode = !!activeRoll()?.meOpen;
+const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', {willReadFrequently:true});
+const LIN = new Float32Array(256);
+for (let i = 0; i < 256; i++){ const c = i / 255; LIN[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+
+async function startShoot(){
+  const r = activeRoll(); if (!r){ show('home'); return; }
+  meMode = meMode || !!r.meOpen;
+  renderShootHeader(); renderControls(); renderMetaChip(null); renderLocChip();
+  if (!stream){
+    $('finderMsg').hidden = false; $('finderMsg').textContent = t('camStarting');
+    if (!navigator.mediaDevices?.getUserMedia){ $('finderMsg').textContent = t('camUnsupported'); return; }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:960}}, audio:false});
+      track = stream.getVideoTracks()[0];
+      video.srcObject = stream; await video.play().catch(() => {});
+      $('finderMsg').hidden = true;
+    } catch (e){
+      $('finderMsg').textContent = e.name === 'NotAllowedError' ? t('camDenied') : t('camFail', e.message);
+      return;
+    }
+  }
+  clearInterval(loopTimer); loopTimer = setInterval(measure, 180);
+  if (navigator.geolocation && geoWatch == null){
+    geoWatch = navigator.geolocation.watchPosition(p => { lastFix = p; geoErr = false; renderLocChip(); }, () => { geoErr = true; renderLocChip(); }, {enableHighAccuracy:true, maximumAge:30000});
+  }
+  try { wakeLock = await navigator.wakeLock?.request('screen'); } catch {}
+}
+function stopShoot(){
+  clearInterval(loopTimer); loopTimer = null;
+  if (stream){ stream.getTracks().forEach(x => x.stop()); stream = null; track = null; video.srcObject = null; }
+  if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
+  try { wakeLock?.release(); } catch {} wakeLock = null;
+}
+document.addEventListener('visibilitychange', () => { if ($('shoot').hidden) return; document.hidden ? stopShoot() : startShoot(); });
+
+function renderLocChip(){
+  const c = $('locChip');
+  if (lastFix){ c.className = 'chip ok'; c.textContent = t('locAcc', Math.round(lastFix.coords.accuracy)); }
+  else if (geoErr){ c.className = 'chip warn'; c.textContent = t('locNo'); }
+  else { c.className = 'chip'; c.textContent = t('locWait'); }
+}
+function exposureMeta(){
+  if (!track?.getSettings) return null;
+  const s = track.getSettings();
+  // Image Capture 명세: exposureTime 단위는 100µs
+  if (s.exposureTime > 0 && s.iso > 0) return {t: s.exposureTime / 10000, iso: s.iso};
+  return null;
+}
+function renderMetaChip(meta){
+  const c = $('metaChip');
+  if (meta){ c.className = 'chip ok'; c.textContent = t('metaAbs', fmtSh(meta.t), Math.round(meta.iso)); }
+  else if (reading){ c.className = 'chip warn'; c.textContent = t('metaCal'); }
+  else { c.className = 'chip'; c.textContent = t('metaChecking'); }
+}
+function toVideo(nx, ny){
+  const w = video.clientWidth, h = video.clientHeight, vw = video.videoWidth, vh = video.videoHeight;
+  const sc = Math.max(w / vw, h / vh), ox = (vw * sc - w) / 2, oy = (vh * sc - h) / 2;
+  return {x: (nx * w + ox) / sc / vw, y: (ny * h + oy) / sc / vh};
+}
+function measure(){
+  if (!video.videoWidth || !$('logSheet').hidden) return;
+  const W = 160, H = Math.round(160 * video.videoHeight / video.videoWidth);
+  canvas.width = W; canvas.height = H;
+  ctx.drawImage(video, 0, 0, W, H);
+  const d = ctx.getImageData(0, 0, W, H).data;
+  const mode = settings.meter;
+  const tl = toVideo(0, 0), br = toVideo(1, 1);
+  const c = mode === 'spot' ? toVideo(spot.x, spot.y) : toVideo(.5, .5);
+  const cx = c.x * W, cy = c.y * H, minDim = Math.min((br.x - tl.x) * W, (br.y - tl.y) * H);
+  const rSpot = minDim * 0.07, sig = minDim * 0.22;
+  let sw = 0, sy = 0, clip = 0, cnt = 0, fw = 0, fy = 0;
+  for (let y = Math.max(0, Math.floor(tl.y * H)); y < Math.min(H, Math.ceil(br.y * H)); y++){
+    for (let x = Math.max(0, Math.floor(tl.x * W)); x < Math.min(W, Math.ceil(br.x * W)); x++){
+      const i = (y * W + x) * 4, R = d[i], G = d[i+1], B = d[i+2];
+      const Y = 0.2126 * LIN[R] + 0.7152 * LIN[G] + 0.0722 * LIN[B];
+      fw++; fy += Y;
+      const dx = x - cx, dy = y - cy, dd = dx*dx + dy*dy;
+      const w = mode === 'spot' ? (dd <= rSpot * rSpot ? 1 : 0) : mode === 'cw' ? 0.25 + Math.exp(-dd / (2 * sig * sig)) : 1;
+      if (w){ sw += w; sy += w * Y; cnt++; if (Math.max(R, G, B) >= 250) clip++; }
+    }
+  }
+  if (!sw) return;
+  const lum = sy / sw, meta = exposureMeta();
+  const ev = sceneEV({lum, meta, phoneN: settings.phoneN, offset: settings.offset, fallbackBase: settings.fallbackBase});
+  reading = {lum, ev, meta, clipFrac: clip / cnt, relToFrame: log2(lum / (fy / fw)), mode};
+  renderLcd(); renderMetaChip(meta);
+}
+
+/* ---------- 촬영: 표시부와 조작 ---------- */
+const meCompStops = () => meMode && settings.meComp && settings.mePlan > 1 ? log2(settings.mePlan) : 0;
+let pShift = 0;   // 프로그램 시프트 (단계 수, +는 조리개 우선에서 조이기 / 셔터 우선에서 느리게)
+function solveAt(k){
+  const r = activeRoll(); if (!reading || !isFinite(reading.ev) || !r) return null;
+  return shiftedSolve({ev100: reading.ev, iso: r.ei, prio: settings.prio, fixed: settings.prio === 'A' ? settings.apFixed : settings.shFixed,
+    step: settings.step, comp: meCompStops(), shift: k});
+}
+function currentSolve(){
+  const s = solveAt(pShift);
+  if (s) pShift = s.shift;   // 목록 끝에서 멈추게
+  return s;
+}
+function setShift(k, buzz){
+  const s = solveAt(k); const next = s ? s.shift : k;
+  if (next !== pShift){ pShift = next; if (buzz) try { navigator.vibrate?.(6); } catch {} }
+  renderLcd();
+}
+function renderStrip(){
+  const el = $('lcdStrip'), cur = currentSolve();
+  if (!cur){ el.innerHTML = ''; return; }
+  let html = '';
+  for (let k = pShift - 2; k <= pShift + 2; k++){
+    const s = solveAt(k), valid = s && s.shift === k;
+    html += `<span class="${k === pShift ? 'on' : valid ? '' : 'void'}">${valid ? `${fmtAp(s.N)} ${fmtSh(s.t)}` : '·'}</span>`;
+  }
+  el.innerHTML = html;
+  $('lcd').setAttribute('aria-valuenow', pShift);
+  $('lcd').setAttribute('aria-valuetext', `${fmtAp(cur.N)} ${fmtSh(cur.t)}`);
+}
+function renderLcd(){
+  const r = activeRoll(); if (!r) return;
+  $('lcdIsoLabel').textContent = 'ISO ' + r.ei + (meCompStops() ? ` · ME −${meCompStops().toFixed(1)}` : '');
+  if (!reading || !isFinite(reading.ev)){ $('lcdEv').textContent = reading ? 'LOW' : '--.-'; $('lcdCombo').textContent = '--'; $('lcdDiff').textContent = ''; $('lcdStrip').innerHTML = ''; $('lcdShift').textContent = ''; return; }
+  $('lcdEv').textContent = (reading.ev >= 0 ? '' : '−') + Math.abs(reading.ev).toFixed(1);
+  const s = currentSolve();
+  renderStrip();
+  $('lcdShift').textContent = pShift ? `P${pShift > 0 ? '+' : '−'}${Math.abs(pShift)}` : '';
+  $('lcdCombo').textContent = `${fmtAp(s.N)} ${fmtSh(s.t)}`;
+  const d = Math.round(s.diff * 10) / 10;
+  $('lcdDiff').textContent = Math.abs(d) < 0.15 ? '±0' : (d > 0 ? '+' : '−') + Math.abs(d).toFixed(1) + ' EV';
+  if (!$('lcd').classList.contains('held'))
+    $('lcdMode').textContent = {spot:'SPOT', cw:'CW', avg:'AVG'}[reading.mode] +
+      (reading.mode === 'spot' ? ` ${reading.relToFrame >= 0 ? '+' : '−'}${Math.abs(reading.relToFrame).toFixed(1)} ${t('vsFrame')}` : '');
+  $('lcdWarn').textContent = reading.clipFrac > 0.2 ? t('clipW') : reading.lum < 0.002 ? t('darkW') : '';
+}
+function renderShootHeader(){
+  const r = activeRoll(); if (!r) return;
+  $('rollTag').textContent = `ROLL ${r.rollNo} · ${formatOf(r)}`;
+  $('rollFilm').textContent = [r.film || t('noFilm'), 'EI ' + r.ei, r.camera].filter(Boolean).join(' · ');
+  const s = nextSlot(r);
+  $('frameCounter').innerHTML = counterHTML(r) + (meMode ? `<small>${t('meBadge', s.exposure || 1, settings.mePlan)}</small>` : '');
+  $('meBadge').hidden = !meMode;
+  $('meBadge').textContent = t('meBadge', s.exposure || 1, settings.mePlan);
+}
+function renderControls(){
+  document.querySelectorAll('#meterSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === settings.meter));
+  document.querySelectorAll('#prioSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === settings.prio));
+  const list = settings.prio === 'A' ? (settings.step === 'third' ? AP_THIRD : AP_FULL) : (settings.step === 'third' ? SH_THIRD : SH_FULL);
+  const cur = settings.prio === 'A' ? settings.apFixed : settings.shFixed;
+  const near = list.reduce((b, v) => Math.abs(log2(v / cur)) < Math.abs(log2(b / cur)) ? v : b, list[0]);
+  $('prioValue').innerHTML = list.map((v, i) => `<option value="${i}" ${v === near ? 'selected' : ''}>${settings.prio === 'A' ? fmtAp(v) : fmtSh(v)}</option>`).join('');
+  const ret = $('reticle');
+  ret.className = 'reticle' + (settings.meter === 'cw' ? ' cw' : settings.meter === 'avg' ? ' avg' : '');
+  ret.style.left = (settings.meter === 'spot' ? spot.x * 100 : 50) + '%';
+  ret.style.top  = (settings.meter === 'spot' ? spot.y * 100 : 50) + '%';
+  $('meToggle').setAttribute('aria-pressed', meMode);
+  $('mePlan').value = settings.mePlan;
+  $('meComp').checked = settings.meComp; $('meComp').disabled = !settings.mePlan;
+}
+/* 프로그램 시프트: 리드아웃 드래그 */
+(() => {
+  const lcd = $('lcd'), STEP_PX = 34;
+  let drag = null, lastTap = 0;
+  lcd.addEventListener('pointerdown', e => {
+    if (lcd.classList.contains('held')) return;
+    drag = {x: e.clientX, start: pShift, moved: false, id: e.pointerId};
+    lcd.setPointerCapture(e.pointerId); lcd.classList.add('dragging');
+  });
+  lcd.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 6) drag.moved = true;
+    // 손가락을 왼쪽으로 밀면 오른쪽 조합이 가운데로 온다
+    setShift(drag.start - Math.round(dx / STEP_PX), true);
+  });
+  const end = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    lcd.classList.remove('dragging');
+    if (!drag.moved){
+      const now = Date.now();
+      if (now - lastTap < 320 && pShift){ setShift(0); toast(t('shiftReset')); }
+      lastTap = now;
+    }
+    drag = null;
+  };
+  lcd.addEventListener('pointerup', end);
+  lcd.addEventListener('pointercancel', end);
+  lcd.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight'){ setShift(pShift + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft'){ setShift(pShift - 1); e.preventDefault(); }
+    else if (e.key === 'Home' || e.key === 'Escape'){ setShift(0); e.preventDefault(); }
+  });
+})();
+$('meterSeg').onclick = e => { const v = e.target.dataset?.v; if (!v) return; settings.meter = v; saveSettings(); renderControls(); };
+$('prioSeg').onclick = e => { const v = e.target.dataset?.v; if (!v) return; settings.prio = v; pShift = 0; saveSettings(); renderControls(); renderLcd(); };
+$('prioValue').onchange = () => {
+  const i = +$('prioValue').value;
+  if (settings.prio === 'A') settings.apFixed = (settings.step === 'third' ? AP_THIRD : AP_FULL)[i];
+  else settings.shFixed = (settings.step === 'third' ? SH_THIRD : SH_FULL)[i];
+  pShift = 0; saveSettings(); renderLcd();
+};
+$('meToggle').onclick = () => {
+  const r = activeRoll(); if (!r) return;
+  meMode = !meMode;
+  if (!meMode && r.meOpen){ toast(t('meDone', r.meOpen.frame)); r.meOpen = null; saveRolls(); }
+  else toast(meMode ? t('meOn') : t('meOff'));
+  renderControls(); renderShootHeader(); renderLcd();
+};
+$('mePlan').onchange = () => { settings.mePlan = +$('mePlan').value; saveSettings(); renderControls(); renderShootHeader(); renderLcd(); };
+$('meComp').onchange = () => { settings.meComp = $('meComp').checked; saveSettings(); renderLcd(); };
+$('finder').addEventListener('click', e => {
+  const b = $('finder').getBoundingClientRect();
+  spot = {x: (e.clientX - b.left) / b.width, y: (e.clientY - b.top) / b.height};
+  if (settings.meter !== 'spot'){ settings.meter = 'spot'; saveSettings(); }
+  renderControls();
+});
+$('shootBack').onclick = () => show('home');
+$('reviewBtn').onclick = () => openReview(activeRoll().id);
+$('endRollBtn').onclick = () => openEnd(false);
+
+/* ---------- 셔터 → 기록 시트 ---------- */
+let held = null;
+$('shutterBtn').onclick = () => {
+  const r = activeRoll(); if (!r) return;
+  measure();
+  held = reading ? {...reading, solved: currentSolve()} : null;
+  $('lcd').classList.add('held'); $('lcdMode').textContent = 'HOLD';
+  const aps = settings.step === 'third' ? AP_THIRD : AP_FULL, shs = settings.step === 'third' ? SH_THIRD : SH_FULL;
+  const s = held?.solved || {N: settings.apFixed, t: settings.shFixed};
+  const nearIdx = (list, v) => list.reduce((bi, x, i) => Math.abs(log2(x / v)) < Math.abs(log2(list[bi] / v)) ? i : bi, 0);
+  const ai = nearIdx(aps, s.N), si = nearIdx(shs, s.t);
+  $('lAp').innerHTML = aps.map((v, i) => `<option value="${i}" ${i === ai ? 'selected' : ''}>${fmtAp(v)}</option>`).join('');
+  $('lSh').innerHTML = shs.map((v, i) => `<option value="${i}" ${i === si ? 'selected' : ''}>${fmtSh(v)}</option>`).join('');
+  $('logEv').textContent = held && isFinite(held.ev) ? `EV ${held.ev.toFixed(1)}` : 'EV --';
+  const slot = nextSlot(r);
+  $('lFrame').value = slot.frame; $('lFrame').disabled = !!r.meOpen;
+  $('logMe').hidden = !meMode; $('logMe').textContent = t('meBadge', slot.exposure || 1, settings.mePlan);
+  $('lLens').value = r.shots.at(-1)?.lens || r.lens; $('lNote').value = '';
+  updateOverNote();
+  $('lLoc').textContent = lastFix ? t('locUsing', Math.round(lastFix.coords.accuracy)) : t('locFetching');
+  $('logSheet').hidden = false;
+};
+function updateOverNote(){
+  const r = activeRoll(), f = +$('lFrame').value;
+  const over = r && f > r.frames;
+  $('lOver').hidden = !over; $('lOver').classList.toggle('over', over);
+  if (over) $('lOver').textContent = t('overNote', f, r.frames);
+  $('lFrame').classList.toggle('over', over);
+}
+$('lFrame').oninput = updateOverNote;
+function closeLog(){ $('logSheet').hidden = true; $('lcd').classList.remove('held'); held = null; }
+$('logNo').onclick = () => { closeLog(); toast(t('skipped')); };
+$('logSheet').onclick = e => { if (e.target === $('logSheet')) closeLog(); };
+
+function getFix(){
+  if (lastFix && Date.now() - lastFix.timestamp < 120000) return Promise.resolve(lastFix);
+  if (!navigator.geolocation) return Promise.resolve(null);
+  return new Promise(res => navigator.geolocation.getCurrentPosition(res, () => res(lastFix), {enableHighAccuracy:true, timeout:6000, maximumAge:60000}));
+}
+$('logYes').onclick = async () => {
+  const r = activeRoll(); if (!r) return;
+  const aps = settings.step === 'third' ? AP_THIRD : AP_FULL, shs = settings.step === 'third' ? SH_THIRD : SH_FULL;
+  const N = aps[+$('lAp').value], sh = shs[+$('lSh').value];
+  const snap = held, when = new Date();
+  $('logYes').disabled = true; $('logYes').textContent = t('locChecking');
+  const fix = await getFix();
+  $('logYes').disabled = false; $('logYes').textContent = t('logYes');
+
+  let frame, exposure;
+  if (meMode){
+    if (r.meOpen){ frame = r.meOpen.frame; exposure = r.meOpen.count + 1; }
+    else { frame = +$('lFrame').value || nextSlot(r).frame; exposure = 1; }
+  } else { frame = +$('lFrame').value || nextSlot(r).frame; exposure = 1; }
+
+  const shot = {
+    frame, exposure, multi: meMode,
+    time: localISO(when),
+    aperture: N, shutter: sh, shutterLabel: fmtSh(sh), iso: r.ei,
+    meteredEV100: snap && isFinite(snap.ev) ? Math.round(snap.ev * 10) / 10 : null,
+    meCompEV: meMode ? -Math.round(meCompStops() * 10) / 10 : 0,
+    meterMode: snap?.mode || settings.meter,
+    meterSource: snap?.meta ? 'exposure-metadata' : 'calibrated',
+    lens: $('lLens').value.trim(), note: $('lNote').value.trim(),
+    lat: fix ? +fix.coords.latitude.toFixed(6) : null,
+    lon: fix ? +fix.coords.longitude.toFixed(6) : null,
+    alt: fix && fix.coords.altitude != null ? Math.round(fix.coords.altitude) : null,
+    accuracy: fix ? Math.round(fix.coords.accuracy) : null
+  };
+  r.shots.push(shot);
+  r.shots.sort((a, b) => a.frame - b.frame || a.exposure - b.exposure);
+
+  let msg = t('logged', frame, meMode ? exposure : 0, !fix);
+  if (meMode){
+    r.meOpen = {frame, count: exposure};
+    if (settings.mePlan && exposure >= settings.mePlan){ r.meOpen = null; meMode = false; msg = t('meDone', frame); renderControls(); }
+  }
+  saveRolls(); closeLog(); renderShootHeader(); renderLcd();
+  toast(msg, frame > r.frames);
+  const doneFrames = groupFrames(r.shots).length;
+  if (!r.meOpen && !r.endPrompted && doneFrames >= r.frames){ r.endPrompted = true; saveRolls(); openEnd(true); }
+};
+
+/* ---------- 롤 종료 ---------- */
+function openEnd(auto){
+  const r = activeRoll(); if (!r) return;
+  const n = groupFrames(r.shots).length;
+  $('endText').textContent = auto ? t('endAuto', r.frames) : t('endManual', n, r.frames);
+  $('endSheet').hidden = false;
+}
+$('endCancel').onclick = () => $('endSheet').hidden = true;
+$('endConfirm').onclick = () => {
+  const r = activeRoll(); $('endSheet').hidden = true; if (!r) return;
+  r.meOpen = null; meMode = false;
+  r.endedAt = localISO(new Date()); saveRolls(); openReview(r.id);
+};
+
+/* ---------- 리뷰 / 내보내기 ---------- */
+let reviewId = null;
+function openReview(id){ reviewId = id; renderReview(); show('review'); }
+function renderReview(){
+  const r = rolls.find(x => x.id === reviewId); if (!r) return show('home');
+  $('reviewTitle').textContent = rollLabel(r);
+  const n = groupFrames(r.shots).length, over = n > r.frames;
+  const push = r.boxIso !== r.ei ? ` (${t('pushShort', r.ei > r.boxIso)} ${Math.abs(log2(r.ei / r.boxIso)).toFixed(1)})` : '';
+  $('reviewMeta').innerHTML = `
+    <div class="row"><span class="chip ${r.endedAt ? '' : 'ok'}">${r.endedAt ? t('ended') : t('shooting')}</span><span class="muted">${esc(formatOf(r))} · <span class="num ${over ? 'over' : ''}">${n}/${r.frames}</span></span></div>
+    <div class="grid2 muted">
+      <div>${t('boxIso')} <b class="num">${r.boxIso}</b> · EI <b class="num">${r.ei}</b>${push}</div>
+      <div>${esc(r.camera || t('noCamera'))}</div>
+      <div>${esc(r.lens || t('noLens'))}</div>
+      <div class="num">${esc(r.startedAt.slice(0,16).replace('T',' '))}</div>
+    </div>${r.note ? `<div class="muted">${esc(r.note)}</div>` : ''}`;
+  const meFrames = new Set(groupFrames(r.shots).filter(g => g.multipleExposure).map(g => g.frame));
+  $('shotRows').innerHTML = r.shots.length ? r.shots.map((s, i) => {
+    const isMe = meFrames.has(s.frame);
+    return `<tr class="${isMe && s.exposure > 1 ? 'me-sub' : ''}">
+      <td class="num ${s.frame > r.frames ? 'over' : ''}">${s.frame}${isMe ? `<span style="color:var(--warn)">-${s.exposure}</span>` : ''}</td>
+      <td class="num">${fmtAp(s.aperture)}</td><td class="num">${esc(s.shutterLabel)}</td>
+      <td class="num">${s.meteredEV100 ?? '–'}</td><td class="num">${esc(s.time.slice(11,16))}</td>
+      <td class="num">${s.lat != null ? s.lat.toFixed(4) + ', ' + s.lon.toFixed(4) : '–'}</td>
+      <td>${esc(s.lens)}</td><td>${esc(s.note)}</td>
+      <td><button class="btn small ghost" data-del="${i}">${t('del')}</button></td></tr>`;
+  }).join('') : `<tr><td colspan="9" class="muted">${t('noShots')}</td></tr>`;
+  $('shotRows').querySelectorAll('[data-del]').forEach(b => b.onclick = () => askDelete('shot', +b.dataset.del));
+  $('finishBtn').hidden = !!r.endedAt;
+  $('resumeBtn').hidden = !r.endedAt || !!activeRoll();
+  let canShareFiles = false;
+  try { canShareFiles = !!(navigator.canShare && navigator.canShare({files:[new File(['x'], 'x.json', {type:'application/json'})]})); } catch {}
+  $('shareBtn').hidden = !canShareFiles;
+}
+$('reviewBack').onclick = () => { const r = rolls.find(x => x.id === reviewId); show(r && !r.endedAt ? 'shoot' : 'home'); };
+$('finishBtn').onclick = () => openEnd(false);
+$('resumeBtn').onclick = () => { const r = rolls.find(x => x.id === reviewId); r.endedAt = null; saveRolls(); show('shoot'); };
+$('deleteRollBtn').onclick = () => askDelete('roll');
+
+let pendingDel = null;
+function askDelete(kind, idx){
+  const r = rolls.find(x => x.id === reviewId);
+  pendingDel = {kind, idx};
+  if (kind === 'roll') $('delText').textContent = t('delRoll', rollLabel(r), r.shots.length);
+  else { const s = r.shots[idx]; $('delText').textContent = t('delShot', t('frameLabel', s.frame, s.multi ? s.exposure : 0)); }
+  $('delSheet').hidden = false;
+}
+$('delCancel').onclick = () => $('delSheet').hidden = true;
+$('delConfirm').onclick = () => {
+  $('delSheet').hidden = true;
+  if (pendingDel.kind === 'roll'){ rolls = rolls.filter(x => x.id !== reviewId); saveRolls(); show('home'); toast(t('rollDeleted')); }
+  else {
+    const r = rolls.find(x => x.id === reviewId), s = r.shots[pendingDel.idx];
+    r.shots.splice(pendingDel.idx, 1);
+    if (r.meOpen && r.meOpen.frame === s.frame){
+      const left = r.shots.filter(x => x.frame === s.frame).length;
+      r.meOpen = left ? {frame: s.frame, count: left} : null;
+    }
+    saveRolls(); renderReview();
+  }
+};
+
+function exportData(r){
+  return {
+    schema: 'film-meter-log/2',
+    roll: {rollNo:r.rollNo, format:r.format, formatName:fmtName(FORMATS.find(f => f.id === r.format)) || r.format, frames:r.frames,
+           film:r.film, boxIso:r.boxIso, ei:r.ei, camera:r.camera, lens:r.lens, note:r.note, startedAt:r.startedAt, endedAt:r.endedAt},
+    frames: groupFrames(r.shots)
+  };
+}
+function toCsv(r){
+  const cols = ['roll','frame','exposure','multiple_exposure','time','film','ei','camera','lens','aperture','shutter','shutter_s','metered_ev100','me_comp_ev','meter_mode','lat','lon','alt','accuracy_m','note'];
+  const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const meFrames = new Set(groupFrames(r.shots).filter(g => g.multipleExposure).map(g => g.frame));
+  const rows = r.shots.map(s => [r.rollNo, s.frame, s.exposure, meFrames.has(s.frame), s.time, r.film, s.iso, r.camera, s.lens, s.aperture, s.shutterLabel,
+    +s.shutter.toPrecision(6), s.meteredEV100, s.meCompEV, s.meterMode, s.lat, s.lon, s.alt, s.accuracy, s.note].map(q).join(','));
+  return '﻿' + [cols.join(','), ...rows].join('\n');
+}
+const fileName = (r, ext) => `roll${String(r.rollNo).padStart(3,'0')}_${(r.film || 'film').replace(/[^\w가-힣-]+/g, '-')}_${r.startedAt.slice(0,10)}.${ext}`;
+function download(name, text, type){
+  const url = URL.createObjectURL(new Blob([text], {type}));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast(t('saved', name));
+}
+$('expJson').onclick = () => { const r = rolls.find(x => x.id === reviewId); download(fileName(r, 'json'), JSON.stringify(exportData(r), null, 2), 'application/json'); };
+$('expCsv').onclick = () => { const r = rolls.find(x => x.id === reviewId); download(fileName(r, 'csv'), toCsv(r), 'text/csv'); };
+$('shareBtn').onclick = async () => {
+  const r = rolls.find(x => x.id === reviewId);
+  const files = [new File([JSON.stringify(exportData(r), null, 2)], fileName(r, 'json'), {type:'application/json'}),
+                 new File([toCsv(r)], fileName(r, 'csv'), {type:'text/csv'})];
+  try { await navigator.share({files, title: rollLabel(r)}); } catch (e){ if (e.name !== 'AbortError') toast(t('shareFail'), true); }
+};
+
+/* ---------- 설정 / 보정 ---------- */
+function openSettings(){
+  const meta = exposureMeta();
+  $('setMeta').textContent = track ? (meta ? t('setMetaAbs') : t('setMetaCal')) : t('setMetaNone');
+  $('sPhoneN').value = settings.phoneN; $('sStep').value = settings.step; $('sOffset').value = settings.offset; $('sRef').value = '';
+  $('sCal').disabled = !reading;
+  $('setSheet').hidden = false;
+}
+$('sCal').onclick = () => {
+  const ref = parseFloat($('sRef').value);
+  if (!isFinite(ref) || !reading || !isFinite(reading.ev)){ toast(t('calNeed'), true); return; }
+  if (reading.meta){ settings.offset = Math.round((settings.offset + ref - reading.ev) * 10) / 10; $('sOffset').value = settings.offset; }
+  else settings.fallbackBase = Math.round((settings.fallbackBase + ref - reading.ev) * 10) / 10;
+  saveSettings(); toast(t('calDone'));
+};
+$('setClose').onclick = () => {
+  settings.phoneN = parseFloat($('sPhoneN').value) || 1.8;
+  settings.offset = parseFloat($('sOffset').value) || 0;
+  if (settings.step !== $('sStep').value) pShift = 0;
+  settings.step = $('sStep').value;
+  saveSettings(); $('setSheet').hidden = true; renderControls(); renderLcd();
+};
+$('shootSettings').onclick = openSettings;
+
+applyLang();
+show('home');
+</script>
+</body>
+</html>
