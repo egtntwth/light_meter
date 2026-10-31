@@ -334,8 +334,9 @@ tr.me-sub td:first-child{color:var(--warn)}
 
 <!-- 설정 시트 -->
 <div class="sheet-bg" id="setSheet" hidden><div class="sheet stack" role="dialog" aria-labelledby="setTitle">
-  <div class="row"><h2 class="grow" id="setTitle" data-i18n="meterSettings"></h2>
-    <div class="lang" role="group" aria-label="Language"><button data-lang="ko">한</button><button data-lang="en">EN</button></div></div>
+  <div class="row" style="position:sticky;top:-18px;z-index:2;background:var(--body-2);margin:-18px 0 0;padding:14px 0 10px"><h2 class="grow" id="setTitle" data-i18n="meterSettings"></h2>
+    <div class="lang" role="group" aria-label="Language"><button data-lang="ko">한</button><button data-lang="en">EN</button></div>
+    <button class="btn primary small" id="setClose" data-i18n="close"></button></div>
   <div class="field"><span class="label" data-i18n="methodL"></span>
     <div class="seg" id="methodSeg" role="group">
       <button data-v="auto" data-i18n="mAuto"></button><button data-v="native" data-i18n="mNative" id="nativeBtn" hidden></button><button data-v="live" data-i18n="mLive"></button><button data-v="photo" data-i18n="mPhoto"></button><button data-v="manual" data-i18n="mManual"></button>
@@ -379,7 +380,6 @@ tr.me-sub td:first-child{color:var(--warn)}
     <div class="muted" style="font-size:12px" data-i18n="sunnyDesc"></div>
     <button class="btn" id="sSunny" data-i18n="sunny"></button>
   </div>
-  <button class="btn primary" id="setClose" data-i18n="close"></button>
 </div></div>
 
 <div class="toast" id="toast" hidden></div>
