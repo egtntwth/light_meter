@@ -1,10 +1,10 @@
 # light_meter
 
-A web-based light meter and shooting log for film cameras. Meter with your phone camera, log the exposure, location and time of every frame, then export the roll as JSON/CSV when it's finished. The exported file is meant for writing EXIF/GPS metadata into your scans later.
+A light meter and shooting log for film cameras. Meter with your phone camera, log the exposure, location and time of every frame, then export the roll as JSON/CSV when it's finished. The exported file is meant for writing EXIF/GPS metadata into your scans later.
 
 **Open the app:** https://egtntwth.github.io/light_meter/
 
-No install, no app store: one link works on both Android and iPhone. Add it to your home screen to use it like an app.
+It runs in the browser today on both Android and iPhone; each phone meters in the way it can, and the logging flow is the same on both. An iPhone app is planned for later.
 
 ## Why
 
@@ -69,7 +69,7 @@ Logs are stored in the browser (localStorage). They're lost if you clear browser
 
 ## Repository
 
-- `index.html`: the whole web app
+- `index.html`: the whole app (runs in the browser)
 - `ios-app/`: an experimental Capacitor + Swift test project for a native iPhone app. Not built or tested on a device yet; the iPhone app is planned for later.
 
 ## Next steps
@@ -84,11 +84,11 @@ Logs are stored in the browser (localStorage). They're lost if you clear browser
 
 # light_meter (한국어)
 
-필름 카메라용 웹 노출계 + 촬영 기록장입니다. 폰 카메라로 측광하고, 찍은 컷마다 노출값·위치·시각을 기록해 두었다가 롤이 끝나면 JSON/CSV로 내보냅니다. 내보낸 파일은 나중에 스캔본에 EXIF/GPS 메타데이터를 입히는 데 씁니다.
+필름 카메라용 노출계 + 촬영 기록장 앱입니다. 폰 카메라로 측광하고, 찍은 컷마다 노출값·위치·시각을 기록해 두었다가 롤이 끝나면 JSON/CSV로 내보냅니다. 내보낸 파일은 나중에 스캔본에 EXIF/GPS 메타데이터를 입히는 데 씁니다.
 
 **바로 열기:** https://egtntwth.github.io/light_meter/
 
-설치도 앱스토어도 필요 없이 링크 하나로 안드로이드와 아이폰에서 동작합니다. 홈 화면에 추가하면 앱처럼 쓸 수 있습니다.
+지금은 웹으로 안드로이드와 아이폰에서 동작합니다. 측광 방식은 기기마다 다르지만 기록은 같은 흐름으로 남습니다. 아이폰 앱은 추후 추가할 예정입니다.
 
 ## 만든 이유
 
@@ -143,7 +143,7 @@ JSON 예시는 위 영어 섹션의 "Export format"을 참고하세요. CSV는 �
 
 ## 저장소 구성
 
-- `index.html`: 웹앱 전체
+- `index.html`: 앱 전체 (브라우저에서 실행)
 - `ios-app/`: Capacitor + Swift로 만든 아이폰 앱 테스트 프로젝트. 아직 실기기 빌드 전이며, 아이폰 앱은 추후 추가할 예정입니다.
 
 ## 다음 단계
