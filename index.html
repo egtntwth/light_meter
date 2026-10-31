@@ -974,7 +974,9 @@ async function handlePhoto(input){
   if (tt > 0 && N > 0 && iso > 0){
     const bv = typeof ex?.BrightnessValue === 'number' && isFinite(ex.BrightnessValue) ? ex.BrightnessValue : null;
     photoMeta = {t: tt, iso: +iso, N: +N, bv, photo: true, model: ex?.Model || ''};
-    photoNote(''); renderMethodUI(); measure();
+    photoNote(''); spot = {x: .5, y: .5}; renderMethodUI(); renderControls(); measure();
+    // 사진이 화면에 그려진 뒤에 다시 측광 (레이아웃 전에 재면 값이 비어 보임)
+    requestAnimationFrame(() => requestAnimationFrame(measure)); setTimeout(measure, 350);
     toast(bv != null ? t('photoBv', bv.toFixed(1), (bv + BV_TO_EV).toFixed(1)) : t('photoMetered', fmtSh(tt), fmtAp(Math.round(N * 10) / 10), iso));
   } else {
     photoMeta = null; renderMethodUI(); renderLcd();
@@ -1087,7 +1089,8 @@ function measure(){
   }
   if (!sw) return;
   if (m === 'live' && manualExp && adaptExposure(fy / fw)) return;
-  const lum = sy / sw, meta = m === 'photo' ? photoMeta : exposureMeta();
+  const lum = Math.max(sy / sw, 1e-5), meta = m === 'photo' ? photoMeta : exposureMeta();
+  fy = Math.max(fy, 1e-5 * fw);   // 완전히 검은 영역에서 log2(0)로 값이 사라지지 않게
   // 아이폰 사진은 HDR·야간 모드로 여러 장을 합성해서 셔터·ISO와 화면 밝기가 맞지 않는다.
   // 카메라가 직접 잰 장면 밝기(EXIF BrightnessValue, APEX Bv)가 있으면 EV100 = Bv + BV_TO_EV를 쓰고,
   // 스팟·중앙중점은 사진 평균 대비 상대 밝기만 더한다.
