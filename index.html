@@ -232,12 +232,10 @@ tr.me-sub td:first-child{color:var(--warn)}
     <div class="photo-actions" id="photoActions" hidden>
       <div class="photo-note" id="photoNote" hidden></div>
       <div class="row" style="justify-content:center">
-        <button class="btn primary" id="photoBtn"></button>
-        <button class="btn" id="photoLibBtn" data-i18n="photoLib"></button>
+        <button class="btn primary" id="photoLibBtn" data-i18n="photoLib"></button>
       </div>
       <button class="btn small" id="toManualBtn" data-i18n="toManual" hidden></button>
     </div>
-    <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
     <input type="file" id="photoLibInput" accept="image/*" hidden>
     <div class="tl"><button class="meter-chip" id="meterChip"></button><span class="chip me" id="meBadge" hidden></span></div>
     <button class="orient" id="orientBtn" data-i18n-aria="orientAria">⇄</button>
@@ -438,11 +436,11 @@ ko: {
   mNative:'앱', metaNative:(s, i, a) => `NATIVE · ${a} ${s} ISO${i}`, nativeFail:m => '앱 카메라를 열 수 없어요: ' + m,
   methodL:'측광 방식', mAuto:'자동', mLive:'실시간', mPhoto:'사진', mManual:'수동',
   methodAuto:m => `자동: 이 기기에서는 "${m}" 방식을 써요. 안드로이드는 실시간, 아이폰·아이패드는 사진 측광.`,
-  methodDesc:{native:'앱: 아이폰 카메라가 실제로 쓰는 셔터·ISO·조리개를 직접 읽어서 실시간으로 절대 측광해요.', live:'실시간: 카메라 화면으로 계속 측광해요.', photo:'사진: 기본 카메라로 한 장 찍으면 사진 속 셔터·조리개·ISO(EXIF)로 EV를 계산해요. 아이폰에서 가장 정확해요.', manual:'수동: 측광 없이 조리개·셔터·장소를 직접 입력해서 기록만 해요.'},
+  methodDesc:{native:'앱: 아이폰 카메라가 실제로 쓰는 셔터·ISO·조리개를 직접 읽어서 실시간으로 절대 측광해요.', live:'실시간: 카메라 화면으로 계속 측광해요.', photo:'사진: 기본 카메라 앱으로 찍은 사진을 앨범에서 고르면 사진 속 노출 정보(EXIF)로 EV를 계산해요. 아이폰에서 가장 정확해요.', manual:'수동: 측광 없이 조리개·셔터·장소를 직접 입력해서 기록만 해요.'},
   methodChanged:m => `측광 방식: ${m}`,
-  photoTake:'📷 사진으로 측광', photoRetake:'📷 다시', photoLibShort:'🖼 앨범', photoReading:'사진 정보를 읽는 중…',
+  photoLibShort:'🖼 다른 사진', photoReading:'사진 정보를 읽는 중…',
   photoNoExif:'이 사진에는 셔터·조리개·ISO 정보가 없어서 측광할 수 없어요.',
-  photoNoExifIos:'아이폰 사파리는 웹에서 바로 찍은 사진의 노출 정보를 지워요. 기본 카메라 앱으로 한 장 찍은 다음 "앨범에서 고르기"로 그 사진을 골라 보세요.',
+  photoNoExifIos:'이 사진에는 노출 정보가 없어요. 기본 카메라 앱으로 찍은 원본 사진을 골라 보세요. (스크린샷·편집본·메신저로 받은 사진은 정보가 지워져 있어요.)',
   photoBv:(bv, ev) => `사진의 밝기값(Bv ${bv}) 기준 EV ${ev}. HDR·야간 모드 영향을 받지 않아요.`, meterChipAria:'측광 방식 바꾸기 (스팟 → 중앙중점 → 평균)',
   photoLib:'🖼 앨범에서 고르기', toManual:'측광 없이 수동으로 기록', exifFound:n => `읽은 정보 ${n}개`,
   photoMetered:(s, a, i) => `사진 노출 ${a} ${s} ISO ${i} 기준으로 측광했어요`, exifLoadFail:'사진 정보를 읽는 도구를 불러오지 못했어요. 인터넷 연결을 확인하세요.',
@@ -515,11 +513,11 @@ en: {
   mNative:'App', metaNative:(s, i, a) => `NATIVE · ${a} ${s} ISO${i}`, nativeFail:m => 'Couldn’t open the app camera: ' + m,
   methodL:'Metering method', mAuto:'Auto', mLive:'Live', mPhoto:'Photo', mManual:'Manual',
   methodAuto:m => `Auto: this device uses "${m}". Android meters live, iPhone and iPad meter from a photo.`,
-  methodDesc:{native:'App: reads the shutter, ISO and aperture the iPhone camera is really using and meters live.', live:'Live: meters continuously from the camera view.', photo:'Photo: take one shot with the built-in camera and the EV is computed from its shutter, aperture and ISO (EXIF). Most accurate on iPhone.', manual:'Manual: no metering. Enter aperture, shutter and place yourself and just log.'},
+  methodDesc:{native:'App: reads the shutter, ISO and aperture the iPhone camera is really using and meters live.', live:'Live: meters continuously from the camera view.', photo:'Photo: pick a shot taken with the Camera app from your library and the EV is computed from its exposure data (EXIF). Most accurate on iPhone.', manual:'Manual: no metering. Enter aperture, shutter and place yourself and just log.'},
   methodChanged:m => `Metering method: ${m}`,
-  photoTake:'📷 Meter from a photo', photoRetake:'📷 Retake', photoLibShort:'🖼 Library', photoReading:'Reading photo data…',
+  photoLibShort:'🖼 Another photo', photoReading:'Reading photo data…',
   photoNoExif:'This photo has no shutter, aperture or ISO data, so it can’t be metered.',
-  photoNoExifIos:'iPhone Safari strips exposure data from photos taken straight from a web page. Take a shot with the Camera app, then pick it with "From library".',
+  photoNoExifIos:'This photo has no exposure data. Pick an original shot from the Camera app. (Screenshots, edits and photos from messengers have it stripped.)',
   photoBv:(bv, ev) => `Metered from the photo’s brightness value (Bv ${bv}): EV ${ev}. Not affected by HDR or Night mode.`, meterChipAria:'Change metering (spot → center → average)',
   photoLib:'🖼 From library', toManual:'Log manually without metering', exifFound:n => `${n} tags read`,
   photoMetered:(s, a, i) => `Metered from photo exposure ${a} ${s} ISO ${i}`, exifLoadFail:'Couldn’t load the photo data reader. Check your connection.',
@@ -944,7 +942,6 @@ function renderMethodUI(){
   img.hidden = !(m === 'photo' && img.getAttribute('src'));
   $('manualPanel').hidden = m !== 'manual';
   $('photoActions').hidden = m !== 'photo';
-  $('photoBtn').textContent = photoMeta ? t('photoRetake') : t('photoTake');
   $('photoLibBtn').textContent = photoMeta ? t('photoLibShort') : t('photoLib');
   $('photoActions').classList.toggle('top', !!photoMeta);
   $('reticle').style.visibility = (m === 'manual' || (m === 'photo' && !photoMeta)) ? 'hidden' : '';
@@ -952,13 +949,11 @@ function renderMethodUI(){
 }
 function photoNote(html){ $('photoNote').hidden = !html; $('photoNote').innerHTML = html || ''; }
 $('photoActions').addEventListener('click', e => e.stopPropagation());
-$('photoBtn').addEventListener('click', () => $('photoInput').click());
 $('photoLibBtn').addEventListener('click', () => $('photoLibInput').click());
 $('toManualBtn').addEventListener('click', () => {
   settings.method = 'manual'; saveSettings(); reading = null;
   renderControls(); renderLcd(); toast(t('methodChanged', methodName('manual'))); startShoot();
 });
-$('photoInput').addEventListener('change', () => handlePhoto($('photoInput')));
 $('photoLibInput').addEventListener('change', () => handlePhoto($('photoLibInput')));
 async function handlePhoto(input){
   const f = input.files?.[0]; input.value = '';
@@ -1295,7 +1290,7 @@ let held = null;
 $('shutterBtn').onclick = () => {
   const r = activeRoll(); if (!r) return;
   const m = method();
-  if (m === 'photo' && !photoMeta){ $('photoInput').click(); return; }   // 사진 측광 전이면 먼저 찍게
+  if (m === 'photo' && !photoMeta){ $('photoLibInput').click(); return; }   // 사진 측광 전이면 먼저 사진 고르기
   if (m !== 'manual') measure();
   held = m !== 'manual' && reading ? {...reading, solved: currentSolve()} : null;
   $('lcd').classList.add('held'); $('lcdMode').textContent = 'HOLD';

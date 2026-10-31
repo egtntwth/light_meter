@@ -16,7 +16,7 @@ A digital photo records its exposure, time and location as EXIF automatically. F
 - **Metering**: spot (tap), center-weighted or average metering; aperture or shutter priority; full-stop or 1/3-stop steps; highlight clipping warning.
 - **Per-device metering method**: chosen by checking what the camera supports, not by OS name.
   - Android: real-time metering with locked exposure, where supported
-  - iPhone/iPad: metering from the EXIF of a photo taken with the built-in camera (or picked from the library)
+  - iPhone/iPad: metering from the EXIF of a photo taken with the Camera app and picked from the library
   - Manual mode: log frames without metering
 - **Exposure compensation and ISO**: ± EC and ISO changes right on the shooting screen.
 - **Program shift**: drag the readout left or right to move along the same EV (f/4 1/500 = f/5.6 1/250 = f/8 1/125). Double-tap to reset.
@@ -100,7 +100,7 @@ Logs are stored in the browser (localStorage). They're lost if you clear browser
 - **측광**: 터치 스팟 / 중앙중점 / 평균 측광, 조리개 우선·셔터 우선, 1스톱·1/3스톱 단계, 하이라이트 포화 경고
 - **기기별 측광 방식**: OS 이름이 아니라 카메라가 지원하는 기능을 확인해서 선택
   - 안드로이드: 실시간 측광(지원 기기는 노출 고정)
-  - 아이폰·아이패드: 기본 카메라로 찍은(또는 앨범에서 고른) 사진의 EXIF로 측광
+  - 아이폰·아이패드: 기본 카메라 앱으로 찍은 사진을 앨범에서 골라 EXIF로 측광
   - 수동 모드: 측광 없이 기록만
 - **노출 보정·ISO 변경**: 촬영 화면에서 바로 ± 보정과 ISO 변경
 - **프로그램 시프트**: 리드아웃을 좌우로 드래그하면 같은 EV에서 조리개·셔터 조합만 변경(f/4 1/500 = f/5.6 1/250 = f/8 1/125), 두 번 탭하면 초기화
