@@ -78,6 +78,8 @@ html,body{overflow-x:hidden}
 .finder{--ar:0.6667;position:relative;width:min(100%, calc(46svh * var(--ar)));aspect-ratio:var(--ar);border-radius:14px;overflow:hidden;background:#000;touch-action:manipulation}
 @supports (width:1cqh){.finder{width:min(100cqw, calc(100cqh * var(--ar)))}}
 .finder .status{position:absolute;left:8px;bottom:8px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;pointer-events:none;max-width:70%}
+html.native, html.native body{background:transparent}
+html.native .finder{background:transparent}
 .finder #photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .finder .manual-panel{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--ink-dim);font-size:14px;line-height:1.6;
   background:repeating-linear-gradient(45deg,var(--body-2) 0 10px,var(--body) 10px 20px)}
@@ -336,7 +338,7 @@ tr.me-sub td:first-child{color:var(--warn)}
     <div class="lang" role="group" aria-label="Language"><button data-lang="ko">한</button><button data-lang="en">EN</button></div></div>
   <div class="field"><span class="label" data-i18n="methodL"></span>
     <div class="seg" id="methodSeg" role="group">
-      <button data-v="auto" data-i18n="mAuto"></button><button data-v="live" data-i18n="mLive"></button><button data-v="photo" data-i18n="mPhoto"></button><button data-v="manual" data-i18n="mManual"></button>
+      <button data-v="auto" data-i18n="mAuto"></button><button data-v="native" data-i18n="mNative" id="nativeBtn" hidden></button><button data-v="live" data-i18n="mLive"></button><button data-v="photo" data-i18n="mPhoto"></button><button data-v="manual" data-i18n="mManual"></button>
     </div>
     <span class="muted" style="font-size:12px" id="methodNote"></span></div>
   <div class="field"><span class="label" data-i18n="meterModeL"></span>
@@ -433,9 +435,10 @@ ko: {
   orientAria:'뷰파인더 가로·세로 전환', homeAria:'홈으로', meterModeL:'측광 방식', prioModeL:'우선 모드와 고정값',
   isoChanged:v => `EI ${v}로 변경했어요. 다음 컷부터 적용돼요.`, ecSet:v => `노출 보정 ${v}`,
   devAuto:(m, n) => `${m} 감지: 메인 카메라 f/${n} 자동 입력`, devIos:'아이폰은 카메라 노출 정보를 웹에 주지 않아서 폰 조리개 값은 쓰이지 않아요. 아래 보정을 한 번 해 주세요.',
+  mNative:'앱', metaNative:(s, i, a) => `NATIVE · ${a} ${s} ISO${i}`, nativeFail:m => '앱 카메라를 열 수 없어요: ' + m,
   methodL:'측광 방식', mAuto:'자동', mLive:'실시간', mPhoto:'사진', mManual:'수동',
   methodAuto:m => `자동: 이 기기에서는 "${m}" 방식을 써요. 안드로이드는 실시간, 아이폰·아이패드는 사진 측광.`,
-  methodDesc:{live:'실시간: 카메라 화면으로 계속 측광해요.', photo:'사진: 기본 카메라로 한 장 찍으면 사진 속 셔터·조리개·ISO(EXIF)로 EV를 계산해요. 아이폰에서 가장 정확해요.', manual:'수동: 측광 없이 조리개·셔터·장소를 직접 입력해서 기록만 해요.'},
+  methodDesc:{native:'앱: 아이폰 카메라가 실제로 쓰는 셔터·ISO·조리개를 직접 읽어서 실시간으로 절대 측광해요.', live:'실시간: 카메라 화면으로 계속 측광해요.', photo:'사진: 기본 카메라로 한 장 찍으면 사진 속 셔터·조리개·ISO(EXIF)로 EV를 계산해요. 아이폰에서 가장 정확해요.', manual:'수동: 측광 없이 조리개·셔터·장소를 직접 입력해서 기록만 해요.'},
   methodChanged:m => `측광 방식: ${m}`,
   photoTake:'📷 사진으로 측광', photoRetake:'📷 다시', photoLibShort:'🖼 앨범', photoReading:'사진 정보를 읽는 중…',
   photoNoExif:'이 사진에는 셔터·조리개·ISO 정보가 없어서 측광할 수 없어요.',
@@ -509,9 +512,10 @@ en: {
   orientAria:'Switch viewfinder between portrait and landscape', homeAria:'Home', meterModeL:'Metering', prioModeL:'Priority and fixed value',
   isoChanged:v => `EI set to ${v}. Applies from the next frame.`, ecSet:v => `Exposure comp ${v}`,
   devAuto:(m, n) => `${m} detected: main camera f/${n} filled in`, devIos:'iPhones don’t share camera exposure data with web pages, so the phone aperture isn’t used. Calibrate once below.',
+  mNative:'App', metaNative:(s, i, a) => `NATIVE · ${a} ${s} ISO${i}`, nativeFail:m => 'Couldn’t open the app camera: ' + m,
   methodL:'Metering method', mAuto:'Auto', mLive:'Live', mPhoto:'Photo', mManual:'Manual',
   methodAuto:m => `Auto: this device uses "${m}". Android meters live, iPhone and iPad meter from a photo.`,
-  methodDesc:{live:'Live: meters continuously from the camera view.', photo:'Photo: take one shot with the built-in camera and the EV is computed from its shutter, aperture and ISO (EXIF). Most accurate on iPhone.', manual:'Manual: no metering. Enter aperture, shutter and place yourself and just log.'},
+  methodDesc:{native:'App: reads the shutter, ISO and aperture the iPhone camera is really using and meters live.', live:'Live: meters continuously from the camera view.', photo:'Photo: take one shot with the built-in camera and the EV is computed from its shutter, aperture and ISO (EXIF). Most accurate on iPhone.', manual:'Manual: no metering. Enter aperture, shutter and place yourself and just log.'},
   methodChanged:m => `Metering method: ${m}`,
   photoTake:'📷 Meter from a photo', photoRetake:'📷 Retake', photoLibShort:'🖼 Library', photoReading:'Reading photo data…',
   photoNoExif:'This photo has no shutter, aperture or ISO data, so it can’t be metered.',
@@ -820,8 +824,15 @@ $('camRetry').addEventListener('click', async e => {
 });
 
 /* 측광 방식: auto면 안드로이드 등은 실시간, 아이폰·아이패드는 사진(EXIF) */
-const method = () => { const m = settings.method || 'auto'; return m === 'auto' ? (isIOS ? 'photo' : 'live') : m; };
-const methodName = m => t({live:'mLive', photo:'mPhoto', manual:'mManual'}[m]);
+// Capacitor 앱 안에서 실행 중이면 Swift 플러그인(LightMeter)으로 카메라 노출값을 직접 받는다
+const NATIVE_LM = window.Capacitor?.isNativePlatform?.() ? window.Capacitor?.Plugins?.LightMeter : null;
+if (NATIVE_LM) document.documentElement.classList.add('native');
+const method = () => {
+  const m = settings.method || 'auto';
+  if (m === 'native' && !NATIVE_LM) return isIOS ? 'photo' : 'live';
+  return m === 'auto' ? (NATIVE_LM ? 'native' : isIOS ? 'photo' : 'live') : m;
+};
+const methodName = m => t({native:'mNative', live:'mLive', photo:'mPhoto', manual:'mManual'}[m]);
 const offKey = () => method() === 'photo' ? 'photoOffset' : 'offset';   // 보정값은 방식별로 따로
 
 async function startShoot(){
@@ -832,7 +843,9 @@ async function startShoot(){
   try { wakeLock = await navigator.wakeLock?.request('screen'); } catch {}
   clearInterval(loopTimer); loopTimer = setInterval(measure, 180);
   const m = method();
-  if (m === 'live'){ if (!stream) await openCamera(); }
+  if (m !== 'native') stopNative();
+  if (m === 'native'){ closeCamera(); finderState(); await startNative(); }
+  else if (m === 'live'){ if (!stream) await openCamera(); }
   else {
     closeCamera();
     if (m === 'photo'){ loadExifr().catch(() => {}); finderState(); }
@@ -843,9 +856,31 @@ function closeCamera(){
   if (stream){ stream.getTracks().forEach(x => x.stop()); stream = null; track = null; video.srcObject = null; }
   manualExp = null;
 }
+/* ---------- 네이티브(아이폰 앱) 측광 ---------- */
+let nativeExp = null, nativeOn = false, nativeSub = null;
+function finderRect(){ const b = $('finder').getBoundingClientRect(); return {x: b.left, y: b.top, width: b.width, height: b.height}; }
+async function startNative(){
+  if (!NATIVE_LM) return;
+  try {
+    if (!nativeSub) nativeSub = await NATIVE_LM.addListener('exposure', d => { nativeExp = d; });
+    await NATIVE_LM.start(finderRect());
+    nativeOn = true; pointNative();
+  } catch (e){ finderState({text: t('nativeFail', e?.message || e)}); }
+}
+function stopNative(){
+  if (!nativeOn) return;
+  nativeOn = false; nativeExp = null;
+  NATIVE_LM?.stop().catch(() => {});
+}
+// 측광 위치: 스팟은 탭한 점, 중앙중점·평균은 화면 가운데 (아이폰 자동노출이 그 점을 기준으로 맞춘다)
+function pointNative(){
+  if (!nativeOn) return;
+  const b = finderRect(), p = settings.meter === 'spot' ? spot : {x: .5, y: .5};
+  NATIVE_LM.setPoint({x: b.x + p.x * b.width, y: b.y + p.y * b.height}).catch(() => {});
+}
 function stopShoot(){
   clearInterval(loopTimer); loopTimer = null;
-  closeCamera();
+  closeCamera(); stopNative();
   if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
   try { wakeLock?.release(); } catch {} wakeLock = null;
 }
@@ -989,6 +1024,11 @@ function exposureMeta(){
 }
 function renderMetaChip(meta){
   const c = $('metaChip'), m = method();
+  if (m === 'native'){
+    if (meta){ c.className = 'chip ok'; c.textContent = t('metaNative', fmtSh(meta.t), Math.round(meta.iso), fmtAp(Math.round(meta.N * 10) / 10)); }
+    else { c.className = 'chip'; c.textContent = t('metaChecking'); }
+    return;
+  }
   if (m === 'manual'){ c.className = 'chip'; c.textContent = t('metaManual'); return; }
   if (m === 'photo'){
     if (meta){ c.className = 'chip ok'; c.textContent = t('metaPhoto', fmtSh(meta.t), Math.round(meta.iso), fmtAp(Math.round(meta.N * 10) / 10)); }
@@ -1015,6 +1055,15 @@ function toVideo(nx, ny){
 function measure(){
   const m = method();
   if (m === 'manual' || !$('logSheet').hidden) return;
+  if (m === 'native'){
+    if (!nativeExp) return;
+    // 아이폰 자동노출이 측광점에 맞춘 노출값 + 목표와의 차이(exposureTargetOffset)로 장면 EV를 구한다
+    const d = nativeExp;
+    const ev = log2(d.N * d.N / d.t) - log2(d.iso / 100) + (d.offset || 0) + (settings.offset || 0);
+    reading = {lum: 0.18, ev, meta: {t: d.t, iso: d.iso, N: d.N, native: true}, clipFrac: 0, relToFrame: 0, mode: settings.meter};
+    renderLcd(); renderMetaChip(reading.meta);
+    return;
+  }
   if (m === 'photo' && !photoMeta) return;
   const src = srcInfo();
   if (!src.vw || !src.w) return;
@@ -1114,6 +1163,7 @@ function renderShootHeader(){
   $('frameCounter').innerHTML = counterHTML(r) + (meMode ? `<small>${t('meBadge', s.exposure || 1, settings.mePlan)}</small>` : '');
   const ratio = FORMAT_RATIO[r.format] || 1.5, land = !!settings.finderLandscape && ratio !== 1;
   $('finder').style.setProperty('--ar', (land ? ratio : 1 / ratio).toFixed(4));
+  if (nativeOn) requestAnimationFrame(() => NATIVE_LM.setFrame(finderRect()).catch(() => {}));
   $('orientBtn').hidden = ratio === 1;
   $('fmtLabel').textContent = ratio === 1 ? '1:1' : land ? ratioLabel(ratio) : ratioLabel(ratio).split(':').reverse().join(':').replace('1:', '1:');
   $('meBadge').hidden = !meMode;
@@ -1134,6 +1184,8 @@ function renderControls(){
   $('meterChip').textContent = {spot:'SPOT', cw:'CW', avg:'AVG'}[settings.meter];
   $('meterChip').setAttribute('aria-label', t('meterChipAria'));
   $('meterChip').hidden = method() === 'manual';
+  $('nativeBtn').hidden = !NATIVE_LM;
+  pointNative();
   const r = activeRoll();
   const ecs = []; for (let k = -9; k <= 9; k++) ecs.push(k / 3);
   $('ecSel').innerHTML = ecs.map(v => `<option value="${v}" ${Math.abs(v - (settings.ec || 0)) < 0.01 ? 'selected' : ''}>${fmtEc(v)}</option>`).join('');
@@ -1223,7 +1275,7 @@ $('finder').addEventListener('click', e => {
   const b = $('finder').getBoundingClientRect();
   spot = {x: (e.clientX - b.left) / b.width, y: (e.clientY - b.top) / b.height};
   if (settings.meter !== 'spot'){ settings.meter = 'spot'; saveSettings(); }
-  renderControls();
+  renderControls(); pointNative();
 });
 $('ecSel').onchange = () => { settings.ec = +$('ecSel').value; saveSettings(); renderLcd(); toast(t('ecSet', fmtEc(settings.ec))); };
 $('isoSel').onchange = () => {

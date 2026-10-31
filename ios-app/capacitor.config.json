@@ -1,0 +1,9 @@
+{
+  "appId": "io.github.egtntwth.lightmeter",
+  "appName": "light_meter",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#1b1d1c"
+  }
+}
