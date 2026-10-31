@@ -921,6 +921,9 @@ $('locRetry').onclick = () => {
 
 /* ---------- 사진(EXIF) 측광 ---------- */
 let photoMeta = null;
+// APEX 표준은 EV100 = Bv + 5지만, 아이폰 Bv는 실측에서 1스톱가량 밝게 나와서 4를 쓴다.
+// 2026-10-31 실측: 후지필름 디카 f/8 1/20 ISO400(EV100 8.3) vs 앱 Bv 4.6 → Bv+5 = 9.6 (+1.3), Bv+4 = 8.6 (+0.3)
+const BV_TO_EV = 4;
 const photoSmall = document.createElement('canvas');
 let exifrPromise = null;
 function loadExifr(){
@@ -977,7 +980,7 @@ async function handlePhoto(input){
     const bv = typeof ex?.BrightnessValue === 'number' && isFinite(ex.BrightnessValue) ? ex.BrightnessValue : null;
     photoMeta = {t: tt, iso: +iso, N: +N, bv, photo: true, model: ex?.Model || ''};
     photoNote(''); renderMethodUI(); measure();
-    toast(bv != null ? t('photoBv', bv.toFixed(1), (bv + 5).toFixed(1)) : t('photoMetered', fmtSh(tt), fmtAp(Math.round(N * 10) / 10), iso));
+    toast(bv != null ? t('photoBv', bv.toFixed(1), (bv + BV_TO_EV).toFixed(1)) : t('photoMetered', fmtSh(tt), fmtAp(Math.round(N * 10) / 10), iso));
   } else {
     photoMeta = null; renderMethodUI(); renderLcd();
     const n = ex ? Object.keys(ex).length : 0;
@@ -1091,10 +1094,10 @@ function measure(){
   if (m === 'live' && manualExp && adaptExposure(fy / fw)) return;
   const lum = sy / sw, meta = m === 'photo' ? photoMeta : exposureMeta();
   // 아이폰 사진은 HDR·야간 모드로 여러 장을 합성해서 셔터·ISO와 화면 밝기가 맞지 않는다.
-  // 카메라가 직접 잰 장면 밝기(EXIF BrightnessValue, APEX Bv)가 있으면 EV100 = Bv + 5를 쓰고,
+  // 카메라가 직접 잰 장면 밝기(EXIF BrightnessValue, APEX Bv)가 있으면 EV100 = Bv + BV_TO_EV를 쓰고,
   // 스팟·중앙중점은 사진 평균 대비 상대 밝기만 더한다.
   const ev = (m === 'photo' && photoMeta.bv != null)
-    ? photoMeta.bv + 5 + (mode === 'avg' ? 0 : log2(lum / (fy / fw))) + (settings[offKey()] || 0)
+    ? photoMeta.bv + BV_TO_EV + (mode === 'avg' ? 0 : log2(lum / (fy / fw))) + (settings[offKey()] || 0)
     : sceneEV({lum, meta, phoneN: m === 'photo' ? photoMeta.N : settings.phoneN, offset: settings[offKey()] || 0, fallbackBase: settings.fallbackBase});
   reading = {lum, ev, meta, clipFrac: clip / cnt, relToFrame: log2(lum / (fy / fw)), mode};
   renderLcd(); renderMetaChip(meta);
